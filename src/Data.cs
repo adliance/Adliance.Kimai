@@ -77,13 +77,13 @@ public class Data
     public override string ToString()
     {
         return $"""
-                {Users.Count} users
-                {Customers.Count} customers
-                {Projects.Count} projects
-                {Activities.Count} activities
-                {PublicHolidays.Count} holidays
-                {Absences.Count} absences
-                {Timesheets.Count} timesheets ({Timesheets.Min(x => x.Begin)} - {Timesheets.Max(x => x.End)})
+                - {Users.Count} users
+                - {Customers.Count} customers
+                - {Projects.Count} projects
+                - {Activities.Count} activities
+                - {PublicHolidays.Count} holidays
+                - {Absences.Count} absences
+                - {Timesheets.Count} timesheets ({Timesheets.Min(x => x.Begin)} - {Timesheets.Max(x => x.End)})
                 """;
     }
 }

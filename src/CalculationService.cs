@@ -18,8 +18,10 @@ public class CalculationService(Configuration config, Data data)
 
         foreach (var e in user.Employments)
         {
+            if (e.Begin > DateOnly.FromDateTime(DateTime.Today)) continue; // so we can add future employments to the config
             if (e.End > DateOnly.FromDateTime(DateTime.Today)) e.End = DateOnly.FromDateTime(DateTime.Today); // only calculate up to today, default value is DateOnly.Max
-            if (e.End < e.Begin) throw new Exception($"End date {e.End} is before start date {e.Begin}.");
+
+            if (e.End < e.Begin) throw new Exception($"End date {e.End} is before start date {e.Begin} (user {user.Username}).");
 
             var currentDay = e.Begin;
             while (currentDay <= e.End)

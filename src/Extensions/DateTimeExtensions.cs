@@ -18,11 +18,18 @@ public static class DateTimeExtensions
 
         public double MinutesToDays(double minutes, Configuration.User user)
         {
-            var employment = user.Employments.SingleOrDefault(x => day >= x.Begin && day <= x.End);
-            if (employment == null) throw new Exception($"No employment found for {user.Username} on {day}.");
-            var expectedMinutes = employment.GetExpectedMinutes(day);
-            if (expectedMinutes > 0) return minutes / expectedMinutes;
-            return 0;
+            try
+            {
+                var employment = user.Employments.SingleOrDefault(x => day >= x.Begin && day <= x.End);
+                if (employment == null) throw new Exception($"No employment found for {user.Username} on {day}.");
+                var expectedMinutes = employment.GetExpectedMinutes(day);
+                if (expectedMinutes > 0) return minutes / expectedMinutes;
+                return 0;
+            }
+            catch (InvalidOperationException)
+            {
+                throw new Exception($"More than one employment found for {user.Username} on {day}.");
+            }
         }
 
         public bool IsVacationDay(Configuration.User user, Data data)
