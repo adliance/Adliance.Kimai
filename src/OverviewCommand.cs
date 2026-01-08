@@ -1,6 +1,5 @@
 using System.CommandLine;
 using System.CommandLine.Invocation;
-using System.Text;
 using Adliance.Kimai.Extensions;
 
 namespace Adliance.Kimai;
@@ -32,7 +31,7 @@ public class OverviewAction : AsynchronousCommandLineAction
     public override async Task<int> InvokeAsync(ParseResult parseResult, CancellationToken cancellationToken = new())
     {
         var url = parseResult.GetRequiredValue(OverviewCommand.UrlOption);
-        var token = parseResult.GetRequiredValue(OverviewCommand.UrlOption);
+        var token = parseResult.GetRequiredValue(OverviewCommand.TokenOption);
 
         try
         {
