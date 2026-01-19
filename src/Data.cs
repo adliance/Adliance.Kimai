@@ -14,7 +14,7 @@ public class Data
     [JsonPropertyName("projects")] public List<Project> Projects { get; init; } = [];
     [JsonPropertyName("timesheets")] public List<Timesheet> Timesheets { get; set; } = [];
     [JsonPropertyName("public_holidays")] public List<PublicHoliday> PublicHolidays { get; init; } = [];
-    [JsonPropertyName("absences")] public List<Absence> Absences { get; init; } = [];
+    [JsonPropertyName("absences")] public List<Absence> Absences { get; set; } = [];
 
     public static async Task<Data> LoadFromCacheOrKimai(KimaiClient.KimaiClient client)
     {
@@ -43,11 +43,17 @@ public class Data
             Customers = await client.GetPaginated<Customer>("/api/customers"),
             Projects = await client.GetPaginated<Project>("/api/projects"),
             Activities = await client.GetPaginated<Activity>("/api/activities"),
-            PublicHolidays = await client.GetPaginated<PublicHoliday>("/api/public-holidays"),
-            Absences = await client.GetPaginated<Absence>("/api/absences")
+            PublicHolidays = await client.GetPaginated<PublicHoliday>("/api/public-holidays")
         };
 
         result.Timesheets = await client.GetPaginatedTimesheets(result.Users.Select(x => x.Id).ToArray());
+
+        // we need to fetch the absences for each user seperately
+        result.Absences = new List<Absence>();
+        foreach (var user in result.Users)
+        {
+            result.Absences.AddRange(await client.GetPaginated<Absence>($"/api/absences?user={user.Id}"));
+        }
 
         Console.WriteLine("done.");
         return result;

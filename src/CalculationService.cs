@@ -27,7 +27,7 @@ public class CalculationService(Configuration config, Data data)
             while (currentDay <= e.End)
             {
                 var expectedMinutes = e.GetExpectedMinutes(currentDay);
-                var earnedVacationMinutes = expectedMinutes / (e.Weekdays.Length * 5d);
+                var earnedVacationMinutesForThisDay = e.MinutesPerDay * (25.0 / 5.0 * e.Weekdays.Length) / (DateTime.IsLeapYear(currentDay.Year) ? 366.0 : 365.0);
 
                 if (currentDay.IsPublicHoliday(data))
                 {
@@ -51,12 +51,12 @@ public class CalculationService(Configuration config, Data data)
                     {
                         if (currentDay.IsHomeOffice(user, data)) user.HomeOfficeDays++;
                         user.ExpectedMinutes += expectedMinutes;
-                        user.RemainingVacationMinutes += earnedVacationMinutes;
                     }
 
                     user.WorkedMinutes += currentDay.GetWorkedMinutes(user, data);
                 }
 
+                user.RemainingVacationMinutes += earnedVacationMinutesForThisDay;
                 currentDay = currentDay.AddDays(1);
             }
         }
