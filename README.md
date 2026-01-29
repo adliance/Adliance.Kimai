@@ -26,6 +26,7 @@ Creates an overview report by fetching data from Kimai.
 **Options:**
 * `-u|--url <url>` (Required): The URL to your Kimai instance. For example: `https://demo.kimai.org/`.
 * `-t|--token <token>` (Required): Your Kimai API token.
+* `-a|--all-users`: (Optional) Loads all users from Kimai. Requires additional permissions.
 
 **Example:**
 ```bash
