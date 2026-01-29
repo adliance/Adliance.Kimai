@@ -22,7 +22,6 @@ public class KimaiClient : IDisposable
         return await GetPaginated<Timesheet>($"api/timesheets?{query.TrimEnd('&')}");
     }
 
-
     public async Task<List<T>> GetPaginated<T>(string url)
     {
         var result = new List<T>();
@@ -63,6 +62,25 @@ public class KimaiClient : IDisposable
         }
 
         return result;
+    }
+
+    public async Task<T> GetRecord<T>(string url)
+    {
+        var response = await _client.GetAsync(url);
+        var responseString = await response.Content.ReadAsStringAsync();
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new Exception($"Error fetching data from Kimai ({response.StatusCode}).{Environment.NewLine}{responseString}");
+        }
+
+        try
+        {
+            return JsonSerializer.Deserialize<T>(responseString, LenientJsonOptions.Instance) ?? throw new Exception("Deserialized object was null.");
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error parsing response from Kimai.{Environment.NewLine}{responseString}", ex);
+        }
     }
 
     public void Dispose()
