@@ -16,7 +16,7 @@ public class Data
     [JsonPropertyName("public_holidays")] public List<PublicHoliday> PublicHolidays { get; init; } = [];
     [JsonPropertyName("absences")] public List<Absence> Absences { get; set; } = [];
 
-    public static async Task<Data> LoadFromCacheOrKimai(KimaiClient.KimaiClient client)
+    public static async Task<Data> LoadFromCacheOrKimai(KimaiClient.KimaiClient client, bool loadAllUsers = false)
     {
         Data? data;
         try
@@ -28,18 +28,21 @@ public class Data
             data = null;
         }
 
-        if (data == null || data.Updated < DateTime.Now.AddDays(-1)) data = await LoadFromKimai(client);
+        if (data == null || data.Updated < DateTime.Now.AddDays(-1))
+        {
+            data = await LoadFromKimai(client, loadAllUsers);
+        }
         await data.SaveToCache();
         return data;
     }
 
-    public static async Task<Data> LoadFromKimai(KimaiClient.KimaiClient client)
+    public static async Task<Data> LoadFromKimai(KimaiClient.KimaiClient client, bool loadAllUsers = false)
     {
         Console.Write("Loading data from Kimai ... ");
         var result = new Data
         {
             Updated = DateTime.Now,
-            Users = await client.GetPaginated<User>("/api/users"),
+            Users = await LoadUsersAsync(client, loadAllUsers),
             Customers = await client.GetPaginated<Customer>("/api/customers"),
             Projects = await client.GetPaginated<Project>("/api/projects"),
             Activities = await client.GetPaginated<Activity>("/api/activities"),
@@ -48,8 +51,8 @@ public class Data
 
         result.Timesheets = await client.GetPaginatedTimesheets(result.Users.Select(x => x.Id).ToArray());
 
-        // we need to fetch the absences for each user seperately
-        result.Absences = new List<Absence>();
+        // we need to fetch the absences for each user separately
+        result.Absences = [];
         foreach (var user in result.Users)
         {
             result.Absences.AddRange(await client.GetPaginated<Absence>($"/api/absences?user={user.Id}"));
@@ -57,6 +60,11 @@ public class Data
 
         Console.WriteLine("done.");
         return result;
+    }
+
+    private static async Task<List<User>> LoadUsersAsync(KimaiClient.KimaiClient client, bool loadAllUsers = false)
+    {
+        return loadAllUsers ? await client.GetPaginated<User>("/api/users") : [await client.GetRecord<User>("/api/users/me")];
     }
 
     private const string CacheFileName = "data.json";
