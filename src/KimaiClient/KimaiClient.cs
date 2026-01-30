@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text.Json;
+using Adliance.Kimai.Exceptions;
 using Adliance.Kimai.KimaiClient.Models;
 
 namespace Adliance.Kimai.KimaiClient;
@@ -37,7 +38,10 @@ public class KimaiClient : IDisposable
 
             var response = await _client.GetAsync($"{url}");
             var responseString = await response.Content.ReadAsStringAsync();
-            if (!response.IsSuccessStatusCode) throw new Exception($"Error fetching data from Kimai ({response.StatusCode}).{Environment.NewLine}{responseString}");
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new ApiException(response.StatusCode, responseString, url, $"Error fetching data from Kimai ({response.StatusCode}).{Environment.NewLine}{responseString}");
+            }
 
             if (response.Headers.TryGetValues("X-Total-Pages", out var values))
             {
@@ -70,7 +74,7 @@ public class KimaiClient : IDisposable
         var responseString = await response.Content.ReadAsStringAsync();
         if (!response.IsSuccessStatusCode)
         {
-            throw new Exception($"Error fetching data from Kimai ({response.StatusCode}).{Environment.NewLine}{responseString}");
+            throw new ApiException(response.StatusCode, responseString, url, $"Error fetching data from Kimai ({response.StatusCode}).{Environment.NewLine}{responseString}");
         }
 
         try

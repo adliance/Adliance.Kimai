@@ -1,5 +1,7 @@
+using System.Net;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Adliance.Kimai.Exceptions;
 using Adliance.Kimai.KimaiClient;
 using Adliance.Kimai.KimaiClient.Models;
 
@@ -62,9 +64,16 @@ public class Data
         return result;
     }
 
-    private static async Task<List<User>> LoadUsersAsync(KimaiClient.KimaiClient client, bool loadAllUsers = false)
+    private static async Task<List<User>> LoadUsersAsync(KimaiClient.KimaiClient client)
     {
-        return loadAllUsers ? await client.GetPaginated<User>("/api/users") : [await client.GetRecord<User>("/api/users/me")];
+        try
+        {
+            return await client.GetPaginated<User>("/api/users");
+        }
+        catch (ApiException ex) when (ex.StatusCode == HttpStatusCode.Forbidden)
+        {
+            return [await client.GetRecord<User>("/api/users/me")];
+        }
     }
 
     private const string CacheFileName = "data.json";

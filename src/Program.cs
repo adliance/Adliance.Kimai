@@ -1,4 +1,4 @@
-﻿using System.CommandLine;
+using System.CommandLine;
 using Adliance.Kimai;
 
 RootCommand rootCommand = new("Some little tool for Adliance that fetches data from Kimai to build some reports.")
