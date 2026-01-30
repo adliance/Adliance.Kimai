@@ -1,5 +1,7 @@
+using System.Net;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Adliance.Kimai.Exceptions;
 using Adliance.Kimai.KimaiClient;
 using Adliance.Kimai.KimaiClient.Models;
 
@@ -28,7 +30,10 @@ public class Data
             data = null;
         }
 
-        if (data == null || data.Updated < DateTime.Now.AddDays(-1)) data = await LoadFromKimai(client);
+        if (data == null || data.Updated < DateTime.Now.AddDays(-1))
+        {
+            data = await LoadFromKimai(client);
+        }
         await data.SaveToCache();
         return data;
     }
@@ -39,7 +44,7 @@ public class Data
         var result = new Data
         {
             Updated = DateTime.Now,
-            Users = await client.GetPaginated<User>("/api/users"),
+            Users = await LoadUsersAsync(client),
             Customers = await client.GetPaginated<Customer>("/api/customers"),
             Projects = await client.GetPaginated<Project>("/api/projects"),
             Activities = await client.GetPaginated<Activity>("/api/activities"),
@@ -48,8 +53,8 @@ public class Data
 
         result.Timesheets = await client.GetPaginatedTimesheets(result.Users.Select(x => x.Id).ToArray());
 
-        // we need to fetch the absences for each user seperately
-        result.Absences = new List<Absence>();
+        // we need to fetch the absences for each user separately
+        result.Absences = [];
         foreach (var user in result.Users)
         {
             result.Absences.AddRange(await client.GetPaginated<Absence>($"/api/absences?user={user.Id}"));
@@ -57,6 +62,18 @@ public class Data
 
         Console.WriteLine("done.");
         return result;
+    }
+
+    private static async Task<List<User>> LoadUsersAsync(KimaiClient.KimaiClient client)
+    {
+        try
+        {
+            return await client.GetPaginated<User>("/api/users");
+        }
+        catch (ApiException ex) when (ex.StatusCode == HttpStatusCode.Forbidden)
+        {
+            return [await client.GetRecord<User>("/api/users/me")];
+        }
     }
 
     private const string CacheFileName = "data.json";

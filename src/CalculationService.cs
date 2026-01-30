@@ -1,4 +1,3 @@
-using System.Globalization;
 using Adliance.Kimai.Extensions;
 
 namespace Adliance.Kimai;
