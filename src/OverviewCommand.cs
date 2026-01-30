@@ -18,18 +18,10 @@ public class OverviewCommand : Command
         Required = true
     };
 
-    // Loading all users requires a specific permission. By default, a user can only access themselves.
-    public static readonly Option<bool> AllUsersOption = new("--all-users", "-a")
-    {
-        Description = "Loads information of all users. Specific permissions required.",
-        Required = false
-    };
-
     public OverviewCommand() : base("overview", "Creates an overview report.")
     {
         Options.Add(UrlOption);
         Options.Add(TokenOption);
-        Options.Add(AllUsersOption);
         Action = new OverviewAction();
     }
 }
@@ -40,13 +32,12 @@ public class OverviewAction : AsynchronousCommandLineAction
     {
         var url = parseResult.GetRequiredValue(OverviewCommand.UrlOption);
         var token = parseResult.GetRequiredValue(OverviewCommand.TokenOption);
-        var fetchAllUsers = parseResult.GetRequiredValue(OverviewCommand.AllUsersOption);
 
         try
         {
             var client = new KimaiClient.KimaiClient(url, token);
 
-            var data = await Data.LoadFromCacheOrKimai(client, fetchAllUsers);
+            var data = await Data.LoadFromCacheOrKimai(client);
             Console.WriteLine(data);
 
             var configuration = await Configuration.Load();

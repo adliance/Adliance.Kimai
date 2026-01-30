@@ -16,7 +16,7 @@ public class Data
     [JsonPropertyName("public_holidays")] public List<PublicHoliday> PublicHolidays { get; init; } = [];
     [JsonPropertyName("absences")] public List<Absence> Absences { get; set; } = [];
 
-    public static async Task<Data> LoadFromCacheOrKimai(KimaiClient.KimaiClient client, bool loadAllUsers = false)
+    public static async Task<Data> LoadFromCacheOrKimai(KimaiClient.KimaiClient client)
     {
         Data? data;
         try
@@ -30,19 +30,19 @@ public class Data
 
         if (data == null || data.Updated < DateTime.Now.AddDays(-1))
         {
-            data = await LoadFromKimai(client, loadAllUsers);
+            data = await LoadFromKimai(client);
         }
         await data.SaveToCache();
         return data;
     }
 
-    public static async Task<Data> LoadFromKimai(KimaiClient.KimaiClient client, bool loadAllUsers = false)
+    public static async Task<Data> LoadFromKimai(KimaiClient.KimaiClient client)
     {
         Console.Write("Loading data from Kimai ... ");
         var result = new Data
         {
             Updated = DateTime.Now,
-            Users = await LoadUsersAsync(client, loadAllUsers),
+            Users = await LoadUsersAsync(client),
             Customers = await client.GetPaginated<Customer>("/api/customers"),
             Projects = await client.GetPaginated<Project>("/api/projects"),
             Activities = await client.GetPaginated<Activity>("/api/activities"),
