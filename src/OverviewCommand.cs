@@ -78,7 +78,7 @@ public class OverviewAction : AsynchronousCommandLineAction
                <tbody>
                """);
 
-        foreach (var u in configuration.Users.OrderBy(x => x.Name))
+        foreach (var u in configuration.Users.Where(x => x.FoundInKimai).OrderBy(x => x.Name))
         {
             var day = u.GetLastEmploymentDay();
             var overtime = u.WorkedMinutes - u.ExpectedMinutes;

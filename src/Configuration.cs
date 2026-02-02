@@ -26,6 +26,7 @@ public class Configuration
         [JsonIgnore] public int PublicHolidayDays { get; set; }
         [JsonIgnore] public int VacationDays { get; set; }
         [JsonIgnore] public int OtherAbsenceDays { get; set; }
+        [JsonIgnore] public bool FoundInKimai { get; set; }
 
         public DateOnly GetLastEmploymentDay()
         {

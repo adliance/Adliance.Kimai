@@ -12,8 +12,9 @@ public class CalculationService(Configuration config, Data data)
     private void CalculateUser(Configuration.User user)
     {
         var kimaiUser = data.Users.SingleOrDefault(x => x.Username.Equals(user.Username, StringComparison.OrdinalIgnoreCase));
-        if (kimaiUser == null) throw new Exception($"User {user.Username} not found in Kimai.");
+        if (kimaiUser == null) return;
         user.Name = kimaiUser.Title;
+        user.FoundInKimai = true;
 
         foreach (var e in user.Employments)
         {
