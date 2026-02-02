@@ -59,7 +59,7 @@ public class KimaiClient : IDisposable
             }
             catch (Exception ex)
             {
-                throw new Exception($"Error parsing response from Kimai.{Environment.NewLine}{responseString}", ex);
+                throw new Exception($"Error parsing response from Kimai: {ex.Message}{Environment.NewLine}{responseString}");
             }
 
             currentPage++;
@@ -83,7 +83,7 @@ public class KimaiClient : IDisposable
         }
         catch (Exception ex)
         {
-            throw new Exception($"Error parsing response from Kimai.{Environment.NewLine}{responseString}", ex);
+            throw new Exception($"Error parsing response from Kimai: {ex.Message}{Environment.NewLine}{responseString}");
         }
     }
 

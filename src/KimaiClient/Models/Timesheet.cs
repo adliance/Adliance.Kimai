@@ -8,7 +8,8 @@ public class Timesheet
     [JsonPropertyName("project")] public int Project { get; set; }
     [JsonPropertyName("user")] public int User { get; set; }
     [JsonPropertyName("begin")] public DateTime Begin { get; set; }
-    [JsonPropertyName("end")] public DateTime End { get; set; }
+    [JsonPropertyName("end")] public DateTime? End { get; set; } // yes, fucking hell, it's apparently possible that the API returns an entry without end date
+
     [JsonPropertyName("description")] public string Description { get; set; } = string.Empty;
     [JsonPropertyName("metaFields")] public List<MetaField> MetaFields { get; set; } = [];
 

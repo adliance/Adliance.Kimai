@@ -15,5 +15,6 @@ public class LenientJsonOptions
             WriteIndented = true
         };
         Instance.Converters.Add(LenientDateTimeConverter.Instance);
+        Instance.Converters.Add(LenientDateTimeNullableConverter.Instance);
     }
 }

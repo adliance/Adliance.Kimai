@@ -82,7 +82,8 @@ public class Data
     {
         try
         {
-            var result = await JsonSerializer.DeserializeAsync<Data>(File.OpenRead(CacheFileName), LenientJsonOptions.Instance) ?? throw new Exception("Deserialized object was null.");
+            await using var inputStream = File.OpenRead(CacheFileName);
+            var result = await JsonSerializer.DeserializeAsync<Data>(inputStream, LenientJsonOptions.Instance) ?? throw new Exception("Deserialized object was null.");
             Console.WriteLine("Loaded data from cache.");
             return result;
         }

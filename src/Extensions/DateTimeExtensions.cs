@@ -55,7 +55,7 @@ public static class DateTimeExtensions
             foreach (var t in timesheets)
             {
                 var begin = t.Begin;
-                var end = t.End;
+                var end = t.End ?? begin;
                 if (begin < day.ToDateTime()) begin = day.ToDateTime();
                 if (end > day.ToDateTime().AddDays(1)) end = day.ToDateTime().AddDays(1);
 
@@ -71,7 +71,7 @@ public static class DateTimeExtensions
             var kimaiUser = data.Users.Single(x => x.Username.Equals(user.Username, StringComparison.OrdinalIgnoreCase));
             return data.Timesheets
                 .Where(x => x.User == kimaiUser.Id)
-                .Where(x => day == DateOnly.FromDateTime(x.Begin) || day == DateOnly.FromDateTime(x.End))
+                .Where(x => day == DateOnly.FromDateTime(x.Begin) || day == DateOnly.FromDateTime(x.End ?? x.Begin))
                 .ToList();
         }
 
