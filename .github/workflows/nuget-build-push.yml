@@ -1,0 +1,45 @@
+name: Publish NuGet
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Install dotnet-setversion
+        run: dotnet tool install -g dotnet-setversion
+        
+      - name: Apply version
+        run: |
+          cd /src
+          dotnet-setversion 1.0.0.${{ github.run_number }}
+
+      - name: Restore
+        run: dotnet restore Adliance.Kimai.slnx
+
+      - name: Build
+        run: dotnet build Adliance.Kimai.slnx --configuration Release --no-restore
+
+      - name: Pack
+        run: |
+          dotnet pack Adliance.Kimai.slnx \
+            --configuration Release \
+            --no-build \
+            --output ./nupkg
+
+      - name: Publish to NuGet
+        run: |
+          dotnet nuget push "./nupkg/*.nupkg" \
+            --api-key ${{ secrets.NUGET_API_KEY }} \
+            --source https://api.nuget.org/v3/index.json

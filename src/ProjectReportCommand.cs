@@ -1,6 +1,5 @@
 using System.CommandLine;
 using System.CommandLine.Invocation;
-using System.Runtime.InteropServices.JavaScript;
 using Adliance.Kimai.Extensions;
 using Adliance.Kimai.KimaiClient.Models;
 
