@@ -70,7 +70,7 @@ public static class DateTimeExtensions
         {
             var kimaiUser = data.Users.Single(x => x.Username.Equals(user.Username, StringComparison.OrdinalIgnoreCase));
             return data.Timesheets
-                .Where(x => x.User == kimaiUser.Id)
+                .Where(x => x.UserId == kimaiUser.Id)
                 .Where(x => day == DateOnly.FromDateTime(x.Begin) || day == DateOnly.FromDateTime(x.End ?? x.Begin))
                 .ToList();
         }

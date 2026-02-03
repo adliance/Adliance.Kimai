@@ -30,11 +30,18 @@ public class Data
             data = null;
         }
 
-        if (data == null || data.Updated < DateTime.Now.AddDays(-1))
+        if (data == null || data.Updated < DateTime.Now.AddHours(-1))
         {
             data = await LoadFromKimai(client);
+            await data.SaveToCache();
         }
-        await data.SaveToCache();
+
+        foreach (var t in data.Timesheets)
+        {
+            t.User = data.Users.SingleOrDefault(x => x.Id == t.UserId);
+            t.Activity = data.Activities.SingleOrDefault(x => x.Id == t.ActivityId);
+        }
+
         return data;
     }
 

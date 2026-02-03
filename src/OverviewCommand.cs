@@ -18,7 +18,7 @@ public class OverviewCommand : Command
         Required = true
     };
 
-    public OverviewCommand() : base("overview", "Creates an overview report.")
+    public OverviewCommand() : base("overview", "Creates an overview report for all users that the API key has access to.")
     {
         Options.Add(UrlOption);
         Options.Add(TokenOption);
