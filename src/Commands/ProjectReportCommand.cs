@@ -1,24 +1,11 @@
 using System.CommandLine;
 using System.CommandLine.Invocation;
-using Adliance.Kimai.Extensions;
 using Adliance.Kimai.KimaiClient.Models;
 
-namespace Adliance.Kimai;
+namespace Adliance.Kimai.Commands;
 
-public class ProjectReportCommand : Command
+public class ProjectReportCommand : CommandBase
 {
-    public static readonly Option<string> UrlOption = new("--url", "-u")
-    {
-        Description = "The URL to your Kimai instance. For example: https://demo.kimai.org/.",
-        Required = true
-    };
-
-    public static readonly Option<string> TokenOption = new("--token", "-t")
-    {
-        Description = "Your Kimai API token.",
-        Required = true
-    };
-
     public static readonly Option<string> ProjectOption = new("--project", "-p")
     {
         Description = "The name of the project.",
@@ -51,8 +38,6 @@ public class ProjectReportCommand : Command
 
     public ProjectReportCommand() : base("project-report", "Creates a report for a specific project.")
     {
-        Options.Add(UrlOption);
-        Options.Add(TokenOption);
         Options.Add(ProjectOption);
         Options.Add(FromOption);
         Options.Add(ToOption);
@@ -66,8 +51,10 @@ public class ProjectReportAction : AsynchronousCommandLineAction
 {
     public override async Task<int> InvokeAsync(ParseResult parseResult, CancellationToken cancellationToken = new())
     {
-        var url = parseResult.GetRequiredValue(ProjectReportCommand.UrlOption);
-        var token = parseResult.GetRequiredValue(ProjectReportCommand.TokenOption);
+        var url = parseResult.GetRequiredValue(CommandBase.UrlOption);
+        var token = parseResult.GetRequiredValue(CommandBase.TokenOption);
+        var outputPath = parseResult.GetValue(CommandBase.OutputPath);
+        if (string.IsNullOrWhiteSpace(outputPath)) outputPath = "./";
         var projectName = parseResult.GetRequiredValue(ProjectReportCommand.ProjectOption);
         var from = parseResult.GetValue(ProjectReportCommand.FromOption);
         var to = parseResult.GetValue(ProjectReportCommand.ToOption);
@@ -93,7 +80,7 @@ public class ProjectReportAction : AsynchronousCommandLineAction
                 .OrderBy(x => x.Begin)
                 .ToList();
 
-            await WriteHtmlFile(project.Name, from, to, pool, poolOffset, matchingEntries);
+            await WriteHtmlFile(outputPath, project.Name, from, to, pool, poolOffset, matchingEntries);
 
             Console.WriteLine("Done. Goodbye.");
             return 0;
@@ -105,9 +92,9 @@ public class ProjectReportAction : AsynchronousCommandLineAction
         }
     }
 
-    private static async Task WriteHtmlFile(string projectName, DateTime from, DateTime to, double pool, double poolOffset, IList<Timesheet> entries)
+    private static async Task WriteHtmlFile(string basePath, string projectName, DateTime from, DateTime to, double pool, double poolOffset, IList<Timesheet> entries)
     {
-        var file = new FileInfo($"Project Report {projectName}.html");
+        var file = new FileInfo(Path.Combine(basePath, $"Project Report {projectName}.html"));
 
         string subTitle;
         if (from == default && to == DateTime.MaxValue) subTitle = "All project time entries.";

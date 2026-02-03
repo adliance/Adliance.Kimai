@@ -68,13 +68,12 @@ public class Configuration
         }
     }
 
-    private const string CacheFileName = "config.json";
-
-    public static async Task<Configuration> Load()
+    public static async Task<Configuration> Load(string filePath)
     {
         try
         {
-            return await JsonSerializer.DeserializeAsync<Configuration>(File.OpenRead(CacheFileName), LenientJsonOptions.Instance) ?? throw new Exception("Deserialized object was null.");
+            await using var stream = File.OpenRead(filePath);
+            return await JsonSerializer.DeserializeAsync<Configuration>(stream, LenientJsonOptions.Instance) ?? throw new Exception("Deserialized object was null.");
         }
         catch (Exception ex)
         {

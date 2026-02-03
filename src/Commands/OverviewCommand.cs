@@ -2,26 +2,12 @@ using System.CommandLine;
 using System.CommandLine.Invocation;
 using Adliance.Kimai.Extensions;
 
-namespace Adliance.Kimai;
+namespace Adliance.Kimai.Commands;
 
-public class OverviewCommand : Command
+public class OverviewCommand : CommandBase
 {
-    public static readonly Option<string> UrlOption = new("--url", "-u")
-    {
-        Description = "The URL to your Kimai instance. For example: https://demo.kimai.org/.",
-        Required = true
-    };
-
-    public static readonly Option<string> TokenOption = new("--token", "-t")
-    {
-        Description = "Your Kimai API token.",
-        Required = true
-    };
-
     public OverviewCommand() : base("overview", "Creates an overview report for all users that the API key has access to.")
     {
-        Options.Add(UrlOption);
-        Options.Add(TokenOption);
         Action = new OverviewAction();
     }
 }
@@ -30,8 +16,12 @@ public class OverviewAction : AsynchronousCommandLineAction
 {
     public override async Task<int> InvokeAsync(ParseResult parseResult, CancellationToken cancellationToken = new())
     {
-        var url = parseResult.GetRequiredValue(OverviewCommand.UrlOption);
-        var token = parseResult.GetRequiredValue(OverviewCommand.TokenOption);
+        var url = parseResult.GetRequiredValue(CommandBase.UrlOption);
+        var token = parseResult.GetRequiredValue(CommandBase.TokenOption);
+        var configPath = parseResult.GetValue(CommandBase.ConfigPath);
+        if (string.IsNullOrWhiteSpace(configPath)) configPath = "./config.json";
+        var outputPath = parseResult.GetValue(CommandBase.OutputPath);
+        if (string.IsNullOrWhiteSpace(outputPath)) outputPath = "./";
 
         try
         {
@@ -40,9 +30,9 @@ public class OverviewAction : AsynchronousCommandLineAction
             var data = await Data.LoadFromCacheOrKimai(client);
             Console.WriteLine(data);
 
-            var configuration = await Configuration.Load();
+            var configuration = await Configuration.Load(configPath);
             new CalculationService(configuration, data).Calculate();
-            await WriteHtmlFile(configuration);
+            await WriteHtmlFile(outputPath, configuration);
 
             Console.WriteLine("Done. Goodbye.");
             return 0;
@@ -54,9 +44,9 @@ public class OverviewAction : AsynchronousCommandLineAction
         }
     }
 
-    private static async Task WriteHtmlFile(Configuration configuration)
+    private static async Task WriteHtmlFile(string basePath, Configuration configuration)
     {
-        var file = new FileInfo("overview.html");
+        var file = new FileInfo(Path.Combine(basePath, "overview.html"));
 
         var html = new HtmlWriter("Overview", $"Generated on {DateTime.Now:yyyy-MM-dd HH:mm}");
 
