@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Adliance.Kimai.Extensions;
 using Adliance.Kimai.KimaiClient;
+using Adliance.Kimai.KimaiClient.Models;
 
 namespace Adliance.Kimai;
 
@@ -27,6 +28,7 @@ public class Configuration
         [JsonIgnore] public int VacationDays { get; set; }
         [JsonIgnore] public int OtherAbsenceDays { get; set; }
         [JsonIgnore] public bool FoundInKimai { get; set; }
+        [JsonIgnore] public List<Warning> Warnings { get; set; } = [];
 
         public DateOnly GetLastEmploymentDay()
         {
@@ -42,6 +44,10 @@ public class Configuration
 
             throw new Exception("No last employment day found.");
         }
+
+        public override string ToString() => Name;
+
+        public record Warning(DateOnly Date, string Text);
     }
 
     public class Employment

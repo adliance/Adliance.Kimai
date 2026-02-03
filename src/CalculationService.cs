@@ -56,9 +56,56 @@ public class CalculationService(Configuration config, Data data)
                     user.WorkedMinutes += currentDay.GetWorkedMinutes(user, data);
                 }
 
+                CalculateWarnings(user, currentDay);
+
                 user.RemainingVacationMinutes += earnedVacationMinutesForThisDay;
                 currentDay = currentDay.AddDays(1);
             }
+        }
+    }
+
+    private void CalculateWarnings(Configuration.User user, DateOnly day)
+    {
+        var timesheets = data.Timesheets
+            .Where(x => x.User?.Username.Equals(user.Username, StringComparison.OrdinalIgnoreCase) == true)
+            .Where(x => x.End.HasValue)
+            .Where(x => day == DateOnly.FromDateTime(x.Begin))
+            .OrderBy(x => x.End!.Value)
+            .ToList();
+
+        // simple hack, if we have a Dienstreise text on this day, we ignore certain warnings regarding max work times
+        if (timesheets.Any(x => x.Description?.Contains("Dienstreise", StringComparison.OrdinalIgnoreCase) == true)) return;
+
+        const double maxMinutesPerDay = 12 * 60;
+        const double maxMinutesWithoutBreak = 6 * 60;
+        const double minutesBreak = 30;
+
+        var totalMinutes = timesheets.Sum(x => x.DurationMinutes);
+        if (totalMinutes > maxMinutesPerDay)
+        {
+            user.Warnings.Add(new Configuration.User.Warning(day, $"Logged more than {maxMinutesWithoutBreak / 60:N2}h ({totalMinutes / 60:N2}h) on this day."));
+        }
+
+        var minutesWithoutBreak = 0.0;
+        var lastEnd = DateTime.MinValue;
+        foreach (var t in timesheets)
+        {
+            if (t.Begin < lastEnd.AddMinutes(minutesBreak))
+            {
+                minutesWithoutBreak += t.DurationMinutes;
+            }
+            else
+            {
+                minutesWithoutBreak = 0;
+            }
+
+            if (minutesWithoutBreak > maxMinutesWithoutBreak)
+            {
+                user.Warnings.Add(new Configuration.User.Warning(day, $"Logged more than {maxMinutesWithoutBreak / 60:N2}h ({minutesWithoutBreak / 60:N2}h) without a break."));
+                break;
+            }
+
+            lastEnd = t.End!.Value;
         }
     }
 }

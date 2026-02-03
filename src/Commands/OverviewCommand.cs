@@ -63,12 +63,15 @@ public class OverviewAction : AsynchronousCommandLineAction
                    <th style="text-align:right;">Absence</th>
                    <th style="text-align:right;">Vacation (used)</th>
                    <th style="text-align:right;">Vacation (remaining)</td>
+                   <th style="text-align:center;" title="Warnings"></td>
                  </tr>
                </thead>
                <tbody>
                """);
 
-        foreach (var u in configuration.Users.Where(x => x.FoundInKimai).OrderBy(x => x.Name))
+        var users = configuration.Users.Where(x => x.FoundInKimai).OrderBy(x => x.Name).ToList();
+
+        foreach (var u in users)
         {
             var day = u.GetLastEmploymentDay();
             var overtime = u.WorkedMinutes - u.ExpectedMinutes;
@@ -86,6 +89,7 @@ public class OverviewAction : AsynchronousCommandLineAction
                       <td style="text-align:right;">{u.OtherAbsenceDays:N0} days</td>
                       <td style="text-align:right;">{u.VacationDays:N0} days</td>
                       <td style="text-align:right;" title="{vacationDays:N2} days + {vacationOffsetDays:N2} days = {vacationDays + vacationOffsetDays:N2} days">{vacationDays + vacationOffsetDays:N2} days</td>
+                      <td style="text-align:center;">{(u.Warnings.Count > 0 ? $"<a href=\"#warnings_{u.Username}\"><mark>{u.Warnings.Count}</mark></a>" : "")}</td>
                     </tr>
                     """);
         }
@@ -94,6 +98,24 @@ public class OverviewAction : AsynchronousCommandLineAction
                </tbody>
                </table>
                """);
+
+        if (users.Any(x => x.Warnings.Count > 0))
+        {
+            foreach (var u in users.Where(x => x.Warnings.Count > 0))
+            {
+                html.W($"""
+                        <section id="warnings_{u.Username}">
+                        <h4>Warnings for {u.Name}</h4>
+                        <ul>
+                        """);
+                foreach (var w in u.Warnings.OrderBy(x => x.Date))
+                {
+                    html.W($"<li><code>{w.Date:yyyy-MM-dd}</code> {w.Text}</li>");
+                }
+
+                html.W("</ul></section>");
+            }
+        }
 
         await File.WriteAllTextAsync(file.FullName, html.ToString());
         Console.WriteLine($"File \"{file.FullName}\" created.");

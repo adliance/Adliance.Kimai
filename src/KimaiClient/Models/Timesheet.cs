@@ -14,6 +14,7 @@ public class Timesheet
     [JsonPropertyName("metaFields")] public List<MetaField> MetaFields { get; set; } = [];
     [JsonIgnore] public User? User { get; set; }
     [JsonIgnore] public Activity? Activity { get; set; }
+    [JsonIgnore] public double DurationMinutes => End!.Value.Subtract(Begin).TotalMinutes;
 
     /*
     [JsonPropertyName("tags")] public List<string> Tags { get; set; } = [];
