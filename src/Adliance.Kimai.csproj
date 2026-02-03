@@ -8,9 +8,9 @@
 
     <AssemblyName>Adliance.Kimai</AssemblyName>
     <RootNamespace>Adliance.Kimai</RootNamespace>
-    <AssemblyVersion>0.0.0.0</AssemblyVersion>
+    <AssemblyVersion>0.0.0</AssemblyVersion>
     <Version>0.0.0</Version>
-    <FileVersion>0.0.0.0</FileVersion>
+    <FileVersion>0.0.0</FileVersion>
     <Authors>Hannes Sachsenhofer, Adrian Fürschuß</Authors>
     <Company>Adliance GmbH</Company>
     <Product>Adliance.Kimai</Product>

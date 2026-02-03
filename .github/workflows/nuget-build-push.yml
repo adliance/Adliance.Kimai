@@ -22,8 +22,8 @@ jobs:
         
       - name: Apply version
         run: |
-          cd /src
-          dotnet-setversion 1.0.0.${{ github.run_number }}
+          cd ./src
+          dotnet-setversion 1.0.${{ github.run_number }}
 
       - name: Restore
         run: dotnet restore Adliance.Kimai.slnx
