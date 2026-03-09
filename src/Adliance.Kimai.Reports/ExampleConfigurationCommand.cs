@@ -1,9 +1,9 @@
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Text.Json;
-using Adliance.Kimai.KimaiClient;
+using Adliance.Kimai.Client;
 
-namespace Adliance.Kimai;
+namespace Adliance.Kimai.Reports;
 
 public class ExampleConfigurationCommand : Command
 {

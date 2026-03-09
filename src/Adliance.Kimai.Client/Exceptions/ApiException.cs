@@ -1,6 +1,6 @@
 using System.Net;
 
-namespace Adliance.Kimai.Exceptions;
+namespace Adliance.Kimai.Client.Exceptions;
 
 /// <summary>
 /// Represents errors that occur because of an invalid request.

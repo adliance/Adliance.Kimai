@@ -1,8 +1,9 @@
 using System.CommandLine;
 using System.CommandLine.Invocation;
-using Adliance.Kimai.KimaiClient.Models;
+using Adliance.Kimai.Client;
+using Adliance.Kimai.Client.Models;
 
-namespace Adliance.Kimai.Commands;
+namespace Adliance.Kimai.Reports.Commands;
 
 public class ProjectReportCommand : CommandBase
 {
@@ -63,7 +64,7 @@ public class ProjectReportAction : AsynchronousCommandLineAction
 
         try
         {
-            var client = new KimaiClient.KimaiClient(url, token);
+            var client = new KimaiClient(url, token);
 
             var data = await Data.LoadFromCacheOrKimai(client);
             Console.WriteLine(data);

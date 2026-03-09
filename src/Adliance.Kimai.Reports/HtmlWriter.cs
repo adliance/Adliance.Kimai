@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace Adliance.Kimai;
+namespace Adliance.Kimai.Reports;
 
 public class HtmlWriter
 {

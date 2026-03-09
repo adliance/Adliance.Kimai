@@ -2,7 +2,7 @@ using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Adliance.Kimai.KimaiClient;
+namespace Adliance.Kimai.Client;
 
 public sealed class LenientDateTimeConverter : JsonConverter<DateTime>
 {

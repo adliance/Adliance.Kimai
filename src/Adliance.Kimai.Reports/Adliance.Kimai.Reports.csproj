@@ -6,8 +6,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
 
-    <AssemblyName>Adliance.Kimai</AssemblyName>
-    <RootNamespace>Adliance.Kimai</RootNamespace>
+    <AssemblyName>Adliance.Kimai.Reports</AssemblyName>
+    <RootNamespace>Adliance.Kimai.Reports</RootNamespace>
     <AssemblyVersion>0.0.0</AssemblyVersion>
     <Version>0.0.0</Version>
     <FileVersion>0.0.0</FileVersion>
@@ -28,7 +28,11 @@
 
   <ItemGroup>
     <PackageReference Include="Adliance.Buddy.CodeStyle" Version="8.0.0.10"/>
-    <PackageReference Include="System.CommandLine" Version="2.0.2"/>
+    <PackageReference Include="System.CommandLine" Version="2.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Adliance.Kimai.Client\Adliance.Kimai.Client.csproj" />
   </ItemGroup>
 
 </Project>

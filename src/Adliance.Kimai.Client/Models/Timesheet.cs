@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Adliance.Kimai.KimaiClient.Models;
+namespace Adliance.Kimai.Client.Models;
 
 public class Timesheet
 {

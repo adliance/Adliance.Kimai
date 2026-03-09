@@ -1,6 +1,6 @@
-using Adliance.Kimai.Extensions;
+using Adliance.Kimai.Reports.Extensions;
 
-namespace Adliance.Kimai;
+namespace Adliance.Kimai.Reports;
 
 public class CalculationService(Configuration config, Data data)
 {

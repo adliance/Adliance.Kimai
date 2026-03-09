@@ -2,11 +2,10 @@ using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Adliance.Kimai.Extensions;
-using Adliance.Kimai.KimaiClient;
-using Adliance.Kimai.KimaiClient.Models;
+using Adliance.Kimai.Client;
+using Adliance.Kimai.Reports.Extensions;
 
-namespace Adliance.Kimai;
+namespace Adliance.Kimai.Reports;
 
 public class Configuration
 {

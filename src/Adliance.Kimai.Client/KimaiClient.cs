@@ -1,9 +1,9 @@
 using System.Globalization;
 using System.Text.Json;
-using Adliance.Kimai.Exceptions;
-using Adliance.Kimai.KimaiClient.Models;
+using Adliance.Kimai.Client.Exceptions;
+using Adliance.Kimai.Client.Models;
 
-namespace Adliance.Kimai.KimaiClient;
+namespace Adliance.Kimai.Client;
 
 public class KimaiClient : IDisposable
 {

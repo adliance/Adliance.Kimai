@@ -1,6 +1,6 @@
-using Adliance.Kimai.KimaiClient.Models;
+using Adliance.Kimai.Client.Models;
 
-namespace Adliance.Kimai.Extensions;
+namespace Adliance.Kimai.Reports.Extensions;
 
 public static class DateTimeExtensions
 {

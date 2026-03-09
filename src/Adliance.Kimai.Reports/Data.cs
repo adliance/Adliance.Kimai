@@ -1,11 +1,11 @@
 using System.Net;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Adliance.Kimai.Exceptions;
-using Adliance.Kimai.KimaiClient;
-using Adliance.Kimai.KimaiClient.Models;
+using Adliance.Kimai.Client;
+using Adliance.Kimai.Client.Exceptions;
+using Adliance.Kimai.Client.Models;
 
-namespace Adliance.Kimai;
+namespace Adliance.Kimai.Reports;
 
 public class Data
 {
@@ -18,7 +18,7 @@ public class Data
     [JsonPropertyName("public_holidays")] public List<PublicHoliday> PublicHolidays { get; init; } = [];
     [JsonPropertyName("absences")] public List<Absence> Absences { get; set; } = [];
 
-    public static async Task<Data> LoadFromCacheOrKimai(KimaiClient.KimaiClient client)
+    public static async Task<Data> LoadFromCacheOrKimai(KimaiClient client)
     {
         Data? data;
         try
@@ -45,7 +45,7 @@ public class Data
         return data;
     }
 
-    public static async Task<Data> LoadFromKimai(KimaiClient.KimaiClient client)
+    public static async Task<Data> LoadFromKimai(KimaiClient client)
     {
         Console.Write("Loading data from Kimai ... ");
         var result = new Data
@@ -71,7 +71,7 @@ public class Data
         return result;
     }
 
-    private static async Task<List<User>> LoadUsersAsync(KimaiClient.KimaiClient client)
+    private static async Task<List<User>> LoadUsersAsync(KimaiClient client)
     {
         try
         {

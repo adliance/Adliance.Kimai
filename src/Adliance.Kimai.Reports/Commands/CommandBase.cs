@@ -1,6 +1,6 @@
 using System.CommandLine;
 
-namespace Adliance.Kimai.Commands;
+namespace Adliance.Kimai.Reports.Commands;
 
 public abstract class CommandBase : Command
 {

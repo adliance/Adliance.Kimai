@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace Adliance.Kimai.KimaiClient;
+namespace Adliance.Kimai.Client;
 
 public class LenientJsonOptions
 {
