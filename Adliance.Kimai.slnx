@@ -6,4 +6,5 @@
   </Folder>
   <Project Path="src/Adliance.Kimai.Client/Adliance.Kimai.Client.csproj" />
   <Project Path="src/Adliance.Kimai.Reports/Adliance.Kimai.Reports.csproj" />
+  <Project Path="src/Adliance.Kimai.Vacations/Adliance.Kimai.Vacations.csproj" />
 </Solution>

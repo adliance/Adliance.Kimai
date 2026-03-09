@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Adliance.Kimai.Client;
 using Adliance.Kimai.Client.Exceptions;
+using Adliance.Kimai.Client.Extensions;
 using Adliance.Kimai.Client.Models;
 
 namespace Adliance.Kimai.Reports;
@@ -51,7 +52,7 @@ public class Data
         var result = new Data
         {
             Updated = DateTime.Now,
-            Users = await LoadUsersAsync(client),
+            Users = await client.GetUsersAsync(),
             Customers = await client.GetPaginated<Customer>("/api/customers"),
             Projects = await client.GetPaginated<Project>("/api/projects"),
             Activities = await client.GetPaginated<Activity>("/api/activities"),
@@ -59,28 +60,10 @@ public class Data
         };
 
         result.Timesheets = await client.GetPaginatedTimesheets(result.Users.Select(x => x.Id).ToArray());
-
-        // we need to fetch the absences for each user separately
-        result.Absences = [];
-        foreach (var user in result.Users)
-        {
-            result.Absences.AddRange(await client.GetPaginated<Absence>($"/api/absences?user={user.Id}"));
-        }
+        result.Absences = await client.GetAbsencesAsync(result.Users.Select(x => x.Id));
 
         Console.WriteLine("done.");
         return result;
-    }
-
-    private static async Task<List<User>> LoadUsersAsync(KimaiClient client)
-    {
-        try
-        {
-            return await client.GetPaginated<User>("/api/users");
-        }
-        catch (ApiException ex) when (ex.StatusCode == HttpStatusCode.Forbidden)
-        {
-            return [await client.GetRecord<User>("/api/users/me")];
-        }
     }
 
     private const string CacheFileName = "data.json";
