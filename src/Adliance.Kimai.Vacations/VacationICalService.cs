@@ -39,8 +39,8 @@ public class VacationICalService(IOptions<KimaiSettings> settings)
                 var ev = new CalendarEvent
                 {
                     Summary = $"Urlaub: {userName}",
-                    DtStart = new CalDateTime(start.Year, start.Month, start.Day),
-                    DtEnd = new CalDateTime(end.AddDays(1).Year, end.AddDays(1).Month, end.AddDays(1).Day),
+                    DtStart = new CalDateTime(start.Year, start.Month, start.Day, 0, 0, 0, "Europe/Vienna"),
+                    DtEnd = new CalDateTime(end.AddDays(1).Year, end.AddDays(1).Month, end.AddDays(1).Day, 0, 0, 0, "Europe/Vienna"),
                     Uid = $"{group.Key}-{start:yyyy-MM-dd}-{end:yyyy-MM-dd}"
                 };
                 calendar.Events.Add(ev);
