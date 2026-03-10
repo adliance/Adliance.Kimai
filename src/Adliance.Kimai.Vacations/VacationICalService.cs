@@ -1,3 +1,4 @@
+using Adliance.Buddy.DateTime;
 using Adliance.Kimai.Client;
 using Adliance.Kimai.Client.Extensions;
 using Ical.Net;
@@ -39,8 +40,8 @@ public class VacationICalService(IOptions<KimaiSettings> settings)
                 var ev = new CalendarEvent
                 {
                     Summary = $"Urlaub: {userName}",
-                    DtStart = new CalDateTime(start.Year, start.Month, start.Day, 0, 0, 0, "Europe/Vienna"),
-                    DtEnd = new CalDateTime(end.AddDays(1).Year, end.AddDays(1).Month, end.AddDays(1).Day, 0, 0, 0, "Europe/Vienna"),
+                    DtStart = new CalDateTime(start, "Europe/Vienna"),
+                    DtEnd = new CalDateTime(end.AddDays(1), "Europe/Vienna"),
                     Uid = $"{group.Key}-{start:yyyy-MM-dd}-{end:yyyy-MM-dd}"
                 };
                 calendar.Events.Add(ev);
@@ -50,26 +51,18 @@ public class VacationICalService(IOptions<KimaiSettings> settings)
         return new CalendarSerializer().SerializeToString(calendar) ?? string.Empty;
     }
 
-    private static IEnumerable<(DateOnly Start, DateOnly End)> GroupConsecutiveDays(List<DateOnly> days)
+    private static IEnumerable<(DateTime Start, DateTime End)> GroupConsecutiveDays(List<DateOnly> days)
     {
         if (days.Count == 0) yield break;
 
-        var start = days[0];
-        var end = days[0];
+        var start = new DateTime(days[0].Year, days[0].Month, days[0].Day).UtcToCet();
+        var end = new DateTime(days[0].Year, days[0].Month, days[0].Day).UtcToCet();
 
         for (var i = 1; i < days.Count; i++)
         {
-            // treat gaps of up to 3 days as the same period (bridges weekends)
-            if (days[i].DayNumber - end.DayNumber <= 3)
-            {
-                end = days[i];
-            }
-            else
-            {
-                yield return (start, end);
-                start = days[i];
-                end = days[i];
-            }
+            yield return (start, end);
+            start = new DateTime(days[i].Year, days[i].Month, days[i].Day).UtcToCet();
+            end = new DateTime(days[i].Year, days[i].Month, days[i].Day).UtcToCet();
         }
 
         yield return (start, end);
