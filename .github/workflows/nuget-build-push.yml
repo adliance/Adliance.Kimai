@@ -6,6 +6,7 @@ on:
     paths:
       - 'src/Adliance.Kimai.Client/**'
       - 'src/Adliance.Kimai.Reports/**'
+      - '.github/workflows/nuget-build-push.yml'
 
 jobs:
   publish:
