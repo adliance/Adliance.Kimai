@@ -6,6 +6,10 @@ builder.Services.Configure<KimaiSettings>(builder.Configuration.GetSection("Kima
 builder.Services.AddScoped<VacationICalService>();
 
 var app = builder.Build();
+app.UseStatusCodePages();
+app.UseDeveloperExceptionPage();
+
+app.MapGet("/", () => Results.Content("Adliance Kimai Vacations", "text/plain"));
 
 app.MapGet("/ical", async (VacationICalService service) =>
 {
