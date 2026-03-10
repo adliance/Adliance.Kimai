@@ -1,8 +1,9 @@
 <Solution>
   <Folder Name="/Solution Items/">
     <File Path=".github/workflows/nuget-build-push.yml" />
+    <File Path=".github/workflows/docker-build-push.yml" />
+    <File Path="src/Adliance.Kimai.Vacations/Dockerfile" />
     <File Path="README.md" />
-    <File Path="src\bin\Debug\net10.0\config.json" />
   </Folder>
   <Project Path="src/Adliance.Kimai.Client/Adliance.Kimai.Client.csproj" />
   <Project Path="src/Adliance.Kimai.Reports/Adliance.Kimai.Reports.csproj" />
