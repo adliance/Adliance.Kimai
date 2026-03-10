@@ -34,6 +34,8 @@ jobs:
           context: .
           file: src/Adliance.Kimai.Vacations/Dockerfile
           push: true
+          build-args: |
+            VERSION=${{ env.VERSION }}
           tags: |
             ghcr.io/adliance/kimai-vacations:latest
-            ghcr.io/adliance/kimai-vacations:${{ github.run_number }}
+            ghcr.io/adliance/kimai-vacations:${{ env.VERSION }}
