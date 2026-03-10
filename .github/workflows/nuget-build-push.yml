@@ -3,6 +3,9 @@ name: Publish NuGet
 on:
   push:
     branches: [ main ]
+    paths:
+      - 'src/Adliance.Kimai.Client/**'
+      - 'src/Adliance.Kimai.Reports/**'
 
 jobs:
   publish:
