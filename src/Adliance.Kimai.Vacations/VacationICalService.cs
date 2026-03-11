@@ -62,7 +62,7 @@ public class VacationICalService(IOptions<KimaiSettings> settings)
         {
             yield return (start.AddDays(1), end.AddDays(2));
             start = days[i];
-            end = days[i],;
+            end = days[i];
         }
 
         yield return (start.AddDays(1), end.AddDays(2));
