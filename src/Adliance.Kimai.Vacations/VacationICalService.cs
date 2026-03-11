@@ -60,9 +60,16 @@ public class VacationICalService(IOptions<KimaiSettings> settings)
 
         for (var i = 1; i < days.Count; i++)
         {
-            yield return (start.AddDays(1), end.AddDays(2));
-            start = days[i];
-            end = days[i];
+            if (days[i].DayNumber - end.DayNumber <= 1)
+            {
+                end = days[i];
+            }
+            else
+            {
+                yield return (start.AddDays(1), end.AddDays(2)); // increase days to correct for UTC -> CET
+                start = days[i];
+                end = days[i];
+            }
         }
 
         yield return (start.AddDays(1), end.AddDays(2));
