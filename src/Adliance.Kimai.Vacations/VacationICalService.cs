@@ -9,11 +9,13 @@ using Microsoft.Extensions.Options;
 
 namespace Adliance.Kimai.Vacations;
 
-public class VacationICalService(IOptions<KimaiSettings> settings)
+public class VacationICalService(IOptions<KimaiOptions> kimaiOptions, IOptions<AuthOptions> authOptions)
 {
-    public async Task<string> GetICalFeedAsync()
+    public async Task<string> GetICalFeedAsync(string? key)
     {
-        using var client = new KimaiClient(settings.Value.BaseUrl, settings.Value.ApiKey);
+        if (!string.IsNullOrWhiteSpace(authOptions.Value.ICalAccessKey) && !authOptions.Value.ICalAccessKey.Equals(key, StringComparison.InvariantCultureIgnoreCase)) throw new UnauthorizedAccessException();
+
+        using var client = new KimaiClient(kimaiOptions.Value.BaseUrl, kimaiOptions.Value.ApiKey);
 
         var users = await client.GetUsersAsync();
         var absences = await client.GetAbsencesAsync(users.Select(u => u.Id));
