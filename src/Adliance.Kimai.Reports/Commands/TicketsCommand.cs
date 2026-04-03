@@ -57,23 +57,6 @@ public class TicketsAction : ActionBase
         await WriteHtmlFile(groups, outputPath, from, to);
     }
 
-    private static string? FindTicketIdentifier(Timesheet timesheet)
-    {
-        var text = timesheet.Description;
-        if (string.IsNullOrWhiteSpace(text)) return null;
-
-        var match = Regex.Match(text, @"(\w{2,4}\-\d{2,5})");
-        if (match.Success) return match.Groups[1].Value;
-
-        match = Regex.Match(text, @"\#(\d{1,5})");
-        if (match.Success) return match.Groups[1].Value;
-
-        match = Regex.Match(text, @"(\d{3,5})");
-        if (match.Success) return match.Groups[1].Value;
-
-        return null;
-    }
-
     private static List<(Customer Customer, Project Project, List<Ticket> Tickets, Ticket UnknownTicket)> FindTickets(Data data, DateTime from, DateTime to)
     {
         var result = new List<(Customer Customer, Project Project, List<Ticket> Tickets, Ticket UnknownTicket)>();
@@ -164,99 +147,121 @@ public class TicketsAction : ActionBase
         var file = new FileInfo(Path.Combine(outputPath, "tickets.html"));
         var html = new HtmlWriter("Tickets", $"Generated on {DateTime.Now:yyyy-MM-dd HH:mm} for entries between {from:yyyy-MM-dd} and {to:yyyy-MM-dd}");
 
-        string? lastCustomerName = null;
-        foreach (var (c, p, tickets, unknownTicket) in groups)
+        foreach (var c in groups.Select(x => x.Customer).Distinct())
         {
-            if (c.Name != lastCustomerName)
-            {
-                html.W("<h4>" + c.Name + "</h4>");
-                lastCustomerName = c.Name;
-            }
-
-            var minutesWithoutTicket = unknownTicket.Duration.TotalMinutes;
-            var minutesInTickets = tickets.Sum(x => x.Duration.TotalMinutes);
-            var minutesInTicketsWithEstimation = tickets.Where(x => x.AdoOriginalEstimate != null).Sum(x => x.Duration.TotalMinutes);
-            var minutesEstimated = tickets.Where(x => x.AdoOriginalEstimate != null).Sum(x => x.AdoOriginalEstimate!.Value.TotalMinutes);
-
             html.W($"""
-                    <details>
-                        <summary><b>{p.Name}</b>
+                    <article>
+                    <header><h5>{c.Name}</h5></header>
                     """);
 
-            if (minutesInTickets > 0)
+            foreach (var (_, p, tickets, unknownTicket) in groups.Where(x => x.Customer == c))
             {
+                var minutesWithoutTicket = unknownTicket.Duration.TotalMinutes;
+                var minutesInTickets = tickets.Sum(x => x.Duration.TotalMinutes);
+                var minutesInTicketsWithEstimation = tickets.Where(x => x.AdoOriginalEstimate != null).Sum(x => x.Duration.TotalMinutes);
+                var minutesEstimated = tickets.Where(x => x.AdoOriginalEstimate != null).Sum(x => x.AdoOriginalEstimate!.Value.TotalMinutes);
+
                 html.W($"""
-                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                        {minutesInTickets.Minutes().Humanize(maxUnit: TimeUnit.Hour)} in {"ticket".ToQuantity(tickets.Count)}
+                        <details>
+                            <summary><b>{p.Name}</b>
                         """);
-            }
 
-            if (minutesWithoutTicket > 0)
-            {
-                html.W($"""
-                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                        {minutesWithoutTicket.Minutes().Humanize(maxUnit: TimeUnit.Hour)} without ticket ({100d / (minutesWithoutTicket + minutesInTickets) * minutesWithoutTicket:N0}%)
-                        """);
-            }
-
-            if (minutesEstimated > 0)
-            {
-                html.W($"""
-                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                        {100d / minutesEstimated * minutesInTicketsWithEstimation:N0}% of estimation
-                        """);
-            }
-
-            html.W("</summary>");
-
-            html.W($"""
-                    <table class="striped">
-                    <thead>
-                      <tr>
-                        <th colspan="2">Ticket</th>
-                        <th>Users</th>
-                        <th style="text-align:right; width:1px;">Estimated</th>
-                        <th style="text-align:right; width:1px;">Worked</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                    """);
-
-            var sortedTickets = tickets.OrderByDescending(x => x.Duration).ToList();
-            if (unknownTicket.Timesheets.Count > 0) sortedTickets.Add(unknownTicket);
-            foreach (var ticket in sortedTickets)
-            {
-                if (!string.IsNullOrEmpty(ticket.AdoTitle))
+                if (minutesInTickets > 0)
                 {
                     html.W($"""
-                            <td colspan="2" style="vertical-align:top;">
-                              <a href="{ticket.AdoUrl}" target="_blank">#{ticket.Identifier} {ticket.AdoTitle}</a> ({ticket.AdoState})
-                            </td>
-                            """);
-                }
-                else
-                {
-                    html.W($"""
-                            <td style="vertical-align:top;">{ticket.Identifier}</td>
-                            <td style="vertical-align:top;"><small>{string.Join("<br />", ticket.Descriptions)}</small></td>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                            {minutesInTickets.Minutes().Humanize(maxUnit: TimeUnit.Hour)} in {"ticket".ToQuantity(tickets.Count)}
                             """);
                 }
 
+                if (minutesWithoutTicket > 0)
+                {
+                    html.W($"""
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                            {minutesWithoutTicket.Minutes().Humanize(maxUnit: TimeUnit.Hour)} without ticket ({100d / (minutesWithoutTicket + minutesInTickets) * minutesWithoutTicket:N0}%)
+                            """);
+                }
+
+                if (minutesEstimated > 0)
+                {
+                    html.W($"""
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                            {100d / minutesEstimated * minutesInTicketsWithEstimation:N0}% of estimation
+                            """);
+                }
+
+                html.W("</summary>");
+
                 html.W($"""
-                          <td style="vertical-align:top; white-space:nowrap;"><small>{string.Join("<br />", ticket.Users)}</small></td>
-                          <td style="text-align:right; vertical-align:top; white-space:nowrap;">
-                            {html.Tag("mark", ticket.AdoOriginalEstimate < ticket.Duration, ticket.AdoOriginalEstimate?.Humanize(maxUnit: TimeUnit.Hour) ?? "")}
-                          </td>
-                          <td style="text-align:right; vertical-align:top; white-space:nowrap;">{ticket.Duration.Humanize(maxUnit: TimeUnit.Hour)}</td>
-                        </tr>
+                        <table class="striped">
+                        <thead>
+                          <tr>
+                            <th colspan="2">Ticket</th>
+                            <th style="width:1px;">Users</th>
+                            <th style="text-align:right; width:1px;">Estimated</th>
+                            <th style="text-align:right; width:1px;">Worked</th>
+                          </tr>
+                        </thead>
+                        <tbody>
                         """);
+
+                var sortedTickets = tickets.OrderByDescending(x => x.Duration).ToList();
+                if (unknownTicket.Timesheets.Count > 0) sortedTickets.Add(unknownTicket);
+                foreach (var ticket in sortedTickets)
+                {
+                    if (!string.IsNullOrEmpty(ticket.AdoTitle))
+                    {
+                        html.W($"""
+                                <td colspan="2" style="vertical-align:top;">
+                                  <a href="{ticket.AdoUrl}" target="_blank">#{ticket.Identifier} {ticket.AdoTitle}</a> ({ticket.AdoState})
+                                </td>
+                                """);
+                    }
+                    else
+                    {
+                        html.W($"""
+                                <td style="vertical-align:top;">{ticket.Identifier}</td>
+                                <td style="vertical-align:top;"><small>{string.Join("<br />", ticket.Descriptions)}</small></td>
+                                """);
+                    }
+
+                    html.W($"""
+                              <td style="vertical-align:top; white-space:nowrap;"><small>{string.Join("<br />", ticket.Users)}</small></td>
+                              <td style="text-align:right; vertical-align:top; white-space:nowrap;">
+                                {html.Tag("mark", ticket.AdoOriginalEstimate < ticket.Duration, ticket.AdoOriginalEstimate?.Humanize(maxUnit: TimeUnit.Hour) ?? "")}
+                              </td>
+                              <td style="text-align:right; vertical-align:top; white-space:nowrap;">{ticket.Duration.Humanize(maxUnit: TimeUnit.Hour)}</td>
+                            </tr>
+                            """);
+                }
+
+                html.W("</tbody></table></details>");
             }
 
-            html.W("</tbody></table></details>");
+            html.W("""
+                    </article>
+                    """);
         }
 
         await File.WriteAllTextAsync(file.FullName, html.ToString());
         Console.WriteLine($"File \"{file.FullName}\" created.");
+    }
+
+    private static string? FindTicketIdentifier(Timesheet timesheet)
+    {
+        var text = timesheet.Description;
+        if (string.IsNullOrWhiteSpace(text)) return null;
+
+        var match = Regex.Match(text, @"(\w{2,5}\-\d{2,5})");
+        if (match.Success) return match.Groups[1].Value;
+
+        match = Regex.Match(text, @"\#(\d{1,5})");
+        if (match.Success) return match.Groups[1].Value;
+
+        match = Regex.Match(text, @"(\d{3,5})");
+        if (match.Success) return match.Groups[1].Value;
+
+        return null;
     }
 
     private static bool TryGetNumericId(string identifier, out int id)
