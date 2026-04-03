@@ -1,8 +1,4 @@
-using System.CommandLine;
-using System.CommandLine.Invocation;
 using System.Globalization;
-using System.Text.Json;
-using Adliance.Kimai.Client;
 using Adliance.Kimai.Reports.Extensions;
 
 namespace Adliance.Kimai.Reports.Commands;
@@ -15,40 +11,11 @@ public class OverviewCommand : CommandBase
     }
 }
 
-public class OverviewAction : AsynchronousCommandLineAction
+public class OverviewAction : ActionBase
 {
-    public override async Task<int> InvokeAsync(ParseResult parseResult, CancellationToken cancellationToken = new())
+    public override async Task PrepareResult(string basePath, Data data, Configuration configuration)
     {
-        var url = parseResult.GetRequiredValue(CommandBase.UrlOption);
-        var token = parseResult.GetRequiredValue(CommandBase.TokenOption);
-        var configPath = parseResult.GetValue(CommandBase.ConfigPath);
-        if (string.IsNullOrWhiteSpace(configPath)) configPath = "./config.json";
-        var outputPath = parseResult.GetValue(CommandBase.OutputPath);
-        if (string.IsNullOrWhiteSpace(outputPath)) outputPath = "./";
-
-        try
-        {
-            var client = new KimaiClient(url, token);
-
-            var data = await Data.LoadFromCacheOrKimai(client);
-            Console.WriteLine(data);
-
-            var configuration = await Configuration.Load(configPath);
-            new CalculationService(configuration, data).Calculate();
-            await WriteHtmlFile(outputPath, configuration);
-
-            Console.WriteLine("Done. Goodbye.");
-            return 0;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine(ex.Message);
-            return -1;
-        }
-    }
-
-    private static async Task WriteHtmlFile(string basePath, Configuration configuration)
-    {
+        new CalculationService(configuration, data).Calculate();
         var file = new FileInfo(Path.Combine(basePath, "overview.html"));
 
         var html = new HtmlWriter("Overview", $"Generated on {DateTime.Now:yyyy-MM-dd HH:mm}");

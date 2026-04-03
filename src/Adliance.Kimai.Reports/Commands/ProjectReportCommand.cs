@@ -1,6 +1,4 @@
 using System.CommandLine;
-using System.CommandLine.Invocation;
-using Adliance.Kimai.Client;
 using Adliance.Kimai.Client.Models;
 
 namespace Adliance.Kimai.Reports.Commands;
@@ -48,49 +46,29 @@ public class ProjectReportCommand : CommandBase
     }
 }
 
-public class ProjectReportAction : AsynchronousCommandLineAction
+public class ProjectReportAction : ActionBase
 {
-    public override async Task<int> InvokeAsync(ParseResult parseResult, CancellationToken cancellationToken = new())
+    public override async Task PrepareResult(string outputPath, Data data, Configuration configuration)
     {
-        var url = parseResult.GetRequiredValue(CommandBase.UrlOption);
-        var token = parseResult.GetRequiredValue(CommandBase.TokenOption);
-        var outputPath = parseResult.GetValue(CommandBase.OutputPath);
-        if (string.IsNullOrWhiteSpace(outputPath)) outputPath = "./";
-        var projectName = parseResult.GetRequiredValue(ProjectReportCommand.ProjectOption);
-        var from = parseResult.GetValue(ProjectReportCommand.FromOption);
-        var to = parseResult.GetValue(ProjectReportCommand.ToOption);
-        var pool = parseResult.GetValue(ProjectReportCommand.TotalPoolSize);
-        var poolOffset = parseResult.GetValue(ProjectReportCommand.OffsetPoolSize);
+        var projectName = ParseResult.GetRequiredValue(ProjectReportCommand.ProjectOption);
+        var from = ParseResult.GetValue(ProjectReportCommand.FromOption);
+        var to = ParseResult.GetValue(ProjectReportCommand.ToOption);
+        var pool = ParseResult.GetValue(ProjectReportCommand.TotalPoolSize);
+        var poolOffset = ParseResult.GetValue(ProjectReportCommand.OffsetPoolSize);
 
-        try
-        {
-            var client = new KimaiClient(url, token);
+        var project = data.Projects.FirstOrDefault(x => x.Name.Equals(projectName, StringComparison.OrdinalIgnoreCase));
+        if (project == null) throw new Exception($"Project {projectName} not found.");
 
-            var data = await Data.LoadFromCacheOrKimai(client);
-            Console.WriteLine(data);
+        // if not specified, use the last month as from/to
+        if (from == default) from = new DateTime(DateTime.Now.AddMonths(-1).Year, DateTime.Now.AddMonths(-1).Month, 1, 0, 0, 0);
+        if (to == default) to = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddSeconds(-1);
 
-            var project = data.Projects.FirstOrDefault(x => x.Name.Equals(projectName, StringComparison.OrdinalIgnoreCase));
-            if (project == null) throw new Exception($"Project {projectName} not found.");
+        var matchingEntries = data.Timesheets
+            .Where(x => x.Project == project.Id && x.Begin >= from && x.End <= to)
+            .OrderBy(x => x.Begin)
+            .ToList();
 
-            // if not specified, use the last month as from/to
-            if (from == default) from = new DateTime(DateTime.Now.AddMonths(-1).Year, DateTime.Now.AddMonths(-1).Month, 1, 0, 0, 0);
-            if (to == default) to = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddSeconds(-1);
-
-            var matchingEntries = data.Timesheets
-                .Where(x => x.Project == project.Id && x.Begin >= from && x.End <= to)
-                .OrderBy(x => x.Begin)
-                .ToList();
-
-            await WriteHtmlFile(outputPath, project.Name, from, to, pool, poolOffset, matchingEntries);
-
-            Console.WriteLine("Done. Goodbye.");
-            return 0;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine(ex.Message);
-            return -1;
-        }
+        await WriteHtmlFile(outputPath, project.Name, from, to, pool, poolOffset, matchingEntries);
     }
 
     private static async Task WriteHtmlFile(string basePath, string projectName, DateTime from, DateTime to, double pool, double poolOffset, IList<Timesheet> entries)

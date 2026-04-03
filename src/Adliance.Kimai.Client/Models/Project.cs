@@ -6,10 +6,10 @@ public class Project
 {
     [JsonPropertyName("id")] public int Id { get; set; }
     [JsonPropertyName("name")] public string Name { get; set; } = string.Empty;
+    [JsonPropertyName("customer")] public int Customer { get; set; }
 
     /*
     [JsonPropertyName("parentTitle")] public string ParentTitle { get; set; } = string.Empty;
-    [JsonPropertyName("customer")] public int Customer { get; set; }
     [JsonPropertyName("orderNumber")] public string OrderNumber { get; set; } = string.Empty;
     [JsonPropertyName("start")] public DateTime? Start { get; set; }
     [JsonPropertyName("end")] public DateTime? End { get; set; }
