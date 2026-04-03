@@ -5,6 +5,7 @@ using Adliance.Kimai.Reports.Commands;
 RootCommand rootCommand = new("Some little tool for Adliance that fetches data from Kimai to build some reports.")
 {
     new OverviewCommand(),
+    new TicketsCommand(),
     new ProjectReportCommand(),
     new ExampleConfigurationCommand()
 };
