@@ -252,10 +252,10 @@ public class TicketsAction : ActionBase
         var text = timesheet.Description;
         if (string.IsNullOrWhiteSpace(text)) return null;
 
-        var match = Regex.Match(text, @"(\w{2,5}\-\d{2,5})");
+        var match = Regex.Match(text, @"\#(\d{1,5})");
         if (match.Success) return match.Groups[1].Value;
 
-        match = Regex.Match(text, @"\#(\d{1,5})");
+        match = Regex.Match(text, @"(\w{2,5}\-\d{2,5})");
         if (match.Success) return match.Groups[1].Value;
 
         match = Regex.Match(text, @"(\d{3,5})");
