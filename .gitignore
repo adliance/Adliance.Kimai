@@ -6,3 +6,4 @@ obj
 .editorconfig
 src/config.json
 src/Adliance.Kimai.Vacations/appsettings.Development.json
+.claude
