@@ -16,6 +16,9 @@ public class CalculationService(Configuration config, Data data)
         user.Name = kimaiUser.Title;
         user.FoundInKimai = true;
 
+        // we need the average of billable, so we need to store them all, to get the average at the end
+        var expectedBillable = new List<double>();
+
         foreach (var e in user.Employments)
         {
             if (e.Begin > DateOnly.FromDateTime(DateTime.Today)) continue; // so we can add future employments to the config
@@ -28,6 +31,8 @@ public class CalculationService(Configuration config, Data data)
             {
                 var expectedMinutes = e.GetExpectedMinutes(currentDay);
                 var earnedVacationMinutesForThisDay = e.MinutesPerDay * (25.0 / 5.0 * e.Weekdays.Length) / (DateTime.IsLeapYear(currentDay.Year) ? 366.0 : 365.0);
+                var expectedBillableOnThisDay = e.GetExpectedBillablePercent(currentDay);
+                if (expectedBillableOnThisDay.HasValue) expectedBillable.Add(expectedBillableOnThisDay.Value);
 
                 if (currentDay.IsPublicHoliday(data))
                 {
@@ -53,7 +58,8 @@ public class CalculationService(Configuration config, Data data)
                         user.ExpectedMinutes += expectedMinutes;
                     }
 
-                    user.WorkedMinutes += currentDay.GetWorkedMinutes(user, data);
+                    user.WorkedTotalMinutes += currentDay.GetWorkedTotalMinutes(user, data);
+                    user.WorkedBillableMinutes += currentDay.GetWorkedBillableMinutes(user, data);
                 }
 
                 CalculateWarnings(user, currentDay);
@@ -62,6 +68,8 @@ public class CalculationService(Configuration config, Data data)
                 currentDay = currentDay.AddDays(1);
             }
         }
+
+        user.ExpectedBillablePercent = expectedBillable.Average();
     }
 
     private void CalculateWarnings(Configuration.User user, DateOnly day)

@@ -47,10 +47,21 @@ public static class DateTimeExtensions
             return day.GetTimesheets(user, data).Any(x => x.IsHomeOffice);
         }
 
-        public double GetWorkedMinutes(Configuration.User user, Data data)
+        public double GetWorkedTotalMinutes(Configuration.User user, Data data)
+        {
+            var timesheets = day.GetTimesheets(user, data);
+            return day.GetMinutes(timesheets);
+        }
+
+        public double GetWorkedBillableMinutes(Configuration.User user, Data data)
+        {
+            var timesheets = day.GetTimesheets(user, data);
+            return day.GetMinutes(timesheets.Where(x => x.IsBillable));
+        }
+
+        private double GetMinutes(IEnumerable<Timesheet> timesheets)
         {
             var result = 0.0;
-            var timesheets = day.GetTimesheets(user, data);
 
             foreach (var t in timesheets)
             {

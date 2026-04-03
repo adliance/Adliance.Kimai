@@ -1,5 +1,7 @@
 using System.CommandLine;
 using System.CommandLine.Invocation;
+using System.Globalization;
+using System.Text.Json;
 using Adliance.Kimai.Client;
 using Adliance.Kimai.Reports.Extensions;
 
@@ -58,6 +60,7 @@ public class OverviewAction : AsynchronousCommandLineAction
                    <th>User</th>
                    <th style="text-align:right;">Expected</th>
                    <th style="text-align:right;">Worked</th>
+                   <th style="text-align:right;">Billable</th>
                    <th style="text-align:right;">Overtime</th>
                    <th style="text-align:right;">Home Office</th>
                    <th style="text-align:right;">Public Holidays</th>
@@ -75,7 +78,7 @@ public class OverviewAction : AsynchronousCommandLineAction
         foreach (var u in users)
         {
             var day = u.GetLastEmploymentDay();
-            var overtime = u.WorkedMinutes - u.ExpectedMinutes;
+            var overtime = u.WorkedTotalMinutes - u.ExpectedMinutes;
             var vacationDays = day.MinutesToDays(u.RemainingVacationMinutes, u);
             var vacationOffsetDays = day.MinutesToDays(u.OffsetVacationsMinutes, u);
 
@@ -83,8 +86,13 @@ public class OverviewAction : AsynchronousCommandLineAction
                     <tr>
                       <td>{u.Name}</td>
                       <td style="text-align:right;">{u.ExpectedMinutes / 60d:N2}h</td>
-                      <td style="text-align:right;">{u.WorkedMinutes / 60d:N2}h</td>
-                      <td style="text-align:right;" title="{overtime / 60d:N2}h + {u.OffsetWorktimeMinutes / 60d:N2}h = {(overtime + u.OffsetWorktimeMinutes) / 60d:N2}h">{(overtime + u.OffsetWorktimeMinutes) / 60d:N2}h</td>
+                      <td style="text-align:right;">{u.WorkedTotalMinutes / 60d:N2}h</td>
+                      <td style="text-align:right;" title="{u.BillablePercent:N2}% / {u.ExpectedBillablePercent:N2}%">
+                        {html.Tag("mark", u.BillablePercent < u.ExpectedBillablePercent, u.BillablePercent.ToString("N0", CultureInfo.InvariantCulture) + "/" + u.ExpectedBillablePercent.ToString("N0", CultureInfo.InvariantCulture) + "%")}
+                      </td>
+                      <td style="text-align:right;" title="{overtime / 60d:N2}h + {u.OffsetWorktimeMinutes / 60d:N2}h = {(overtime + u.OffsetWorktimeMinutes) / 60d:N2}h">
+                        {(overtime + u.OffsetWorktimeMinutes) / 60d:N2}h
+                      </td>
                       <td style="text-align:right;">{u.HomeOfficeDays:N0} days</td>
                       <td style="text-align:right;">{u.PublicHolidayDays:N0} days</td>
                       <td style="text-align:right;">{u.OtherAbsenceDays:N0} days</td>

@@ -12,6 +12,8 @@ public class Timesheet
 
     [JsonPropertyName("description")] public string Description { get; set; } = string.Empty;
     [JsonPropertyName("metaFields")] public List<MetaField> MetaFields { get; set; } = [];
+    [JsonPropertyName("billable")] public bool IsBillable { get; set; }
+
     [JsonIgnore] public User? User { get; set; }
     [JsonIgnore] public Activity? Activity { get; set; }
     [JsonIgnore] public double DurationMinutes => End!.Value.Subtract(Begin).TotalMinutes;
@@ -23,7 +25,6 @@ public class Timesheet
     [JsonPropertyName("rate")] public double Rate { get; set; }
     [JsonPropertyName("internalRate")] public double InternalRate { get; set; }
     [JsonPropertyName("exported")] public bool Exported { get; set; }
-    [JsonPropertyName("billable")] public bool Billable { get; set; }
     */
 
     public bool IsHomeOffice => MetaFields.Any(x => x is { Name: "homeoffice", Value: "1" });

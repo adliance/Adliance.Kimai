@@ -32,6 +32,12 @@ public class HtmlWriter
            """);
     }
 
+    public string Tag(string tag, bool condition, string content)
+    {
+        if (!condition) return content;
+        return $"<{tag}>{content}</{tag}>";
+    }
+
     public void W(string line)
     {
         _sb.AppendLine(line);
