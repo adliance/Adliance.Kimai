@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
@@ -54,6 +55,7 @@ public class AzureDevOpsClient
         var url = $"_apis/wit/workitems?ids={idsParam}&fields=System.Title,System.State,Microsoft.VSTS.Scheduling.OriginalEstimate&$expand=Links&api-version=7.1";
         var response = await _http.GetAsync(url);
         if (!response.IsSuccessStatusCode) return null;
+        if (response.StatusCode == (HttpStatusCode)203) throw new Exception("Azure DevOps authentication failed.");
 
         var json = await response.Content.ReadAsStringAsync();
         var result = JsonSerializer.Deserialize<WorkItemsResponse>(json, LenientJsonOptions.Instance);
@@ -82,7 +84,8 @@ public class AzureDevOpsClient
         [JsonPropertyName("System.Title")] public string? Title { get; set; }
         [JsonPropertyName("System.State")] public string? State { get; set; }
 
-        [JsonPropertyName("Microsoft.VSTS.Scheduling.OriginalEstimate")] public double? OriginalEstimate { get; set; }
+        [JsonPropertyName("Microsoft.VSTS.Scheduling.OriginalEstimate")]
+        public double? OriginalEstimate { get; set; }
     }
 
     private sealed class WorkItemsResponse

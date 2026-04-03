@@ -110,7 +110,7 @@ public class TicketsAction : ActionBase
         var adoPat = ParseResult.GetValue(TicketsCommand.AdoPatOption);
         if (!string.IsNullOrWhiteSpace(adoUrl) && !string.IsNullOrWhiteSpace(adoPat))
         {
-            Console.WriteLine("Loading Azure DevOps work item data...");
+            Console.WriteLine("Loading work items from Azure DevOps ...");
             var adoClient = new AzureDevOpsClient(adoUrl, adoPat);
 
             var allTickets = groups.SelectMany(g => g.Tickets).ToList();
