@@ -1,10 +1,22 @@
 # Adliance.Kimai
 
+[![NuGet](https://img.shields.io/nuget/v/Adliance.Kimai.svg)](https://www.nuget.org/packages/Adliance.Kimai)
+
 Some little tool for Adliance that fetches data from Kimai to build some reports.
 
 ## Installation
 
-Ensure you have the .NET 10 SDK installed. Clone the repository and build the project:
+Ensure you have the .NET 10 SDK installed.
+
+### From NuGet as global tool
+
+```bash
+dotnet tool install --global Adliance.Kimai
+```
+
+### From Source
+
+Clone the repository and build the project:
 
 ```bash
 dotnet build
