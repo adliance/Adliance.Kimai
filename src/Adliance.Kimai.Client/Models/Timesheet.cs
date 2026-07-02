@@ -16,7 +16,7 @@ public class Timesheet
 
     [JsonIgnore] public User? User { get; set; }
     [JsonIgnore] public Activity? Activity { get; set; }
-    [JsonIgnore] public double DurationMinutes => End!.Value.Subtract(Begin).TotalMinutes;
+    [JsonIgnore] public double DurationMinutes => End?.Subtract(Begin).TotalMinutes ?? 0; // Fall back to 0, as the time entry is not finished yet
 
     /*
     [JsonPropertyName("tags")] public List<string> Tags { get; set; } = [];
