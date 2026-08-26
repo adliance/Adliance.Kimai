@@ -1,3 +1,4 @@
+using System.CommandLine;
 using System.Globalization;
 using Adliance.Kimai.Reports.Extensions;
 
@@ -5,8 +6,16 @@ namespace Adliance.Kimai.Reports.Commands;
 
 public class OverviewCommand : CommandBase
 {
+    public static readonly Option<DateOnly> UntilOption = new("--until")
+    {
+        Description = "A date to calculate the report up to (including this day), to get the state at this day. Defaults to today.",
+        Required = false,
+        DefaultValueFactory = _ => DateOnly.FromDateTime(DateTime.Today)
+    };
+
     public OverviewCommand() : base("overview", "Creates an overview report for all users that the API key has access to.")
     {
+        Options.Add(UntilOption);
         Action = new OverviewAction();
     }
 }
@@ -15,10 +24,12 @@ public class OverviewAction : ActionBase
 {
     public override async Task PrepareResult(string basePath, Data data, Configuration configuration)
     {
-        new CalculationService(configuration, data).Calculate();
+        var until = ParseResult.GetValue(OverviewCommand.UntilOption);
+
+        new CalculationService(configuration, data, until).Calculate();
         var file = new FileInfo(Path.Combine(basePath, "overview.html"));
 
-        var html = new HtmlWriter("Overview", $"Generated on {DateTime.Now:yyyy-MM-dd HH:mm}");
+        var html = new HtmlWriter("Overview", $"Generated on {DateTime.Now:yyyy-MM-dd HH:mm}, calculated up to and including {until:yyyy-MM-dd}.");
 
         html.W("""
                <table class="striped">
@@ -40,11 +51,15 @@ public class OverviewAction : ActionBase
                <tbody>
                """);
 
-        var users = configuration.Users.Where(x => x.FoundInKimai).OrderBy(x => x.Name).ToList();
+        var users = configuration.Users
+            .Where(x => x.FoundInKimai)
+            .Where(x => x.Employments.Any(e => e.Begin <= until)) // users that aren't employed yet on the "until" day can't be calculated
+            .OrderBy(x => x.Name)
+            .ToList();
 
         foreach (var u in users)
         {
-            var day = u.GetLastEmploymentDay();
+            var day = u.GetLastEmploymentDay(until);
             var overtime = u.WorkedTotalMinutes - u.ExpectedMinutes;
             var vacationDays = day.MinutesToDays(u.RemainingVacationMinutes, u);
             var vacationOffsetDays = day.MinutesToDays(u.OffsetVacationsMinutes, u);

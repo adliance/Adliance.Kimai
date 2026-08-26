@@ -32,11 +32,13 @@ public class Configuration
         [JsonIgnore] public double BillablePercent => 100d / WorkedTotalMinutes * WorkedBillableMinutes;
         [JsonIgnore] public double ExpectedBillablePercent { get; set; }
 
-        public DateOnly GetLastEmploymentDay()
+        public DateOnly GetLastEmploymentDay(DateOnly? until = null)
         {
-            foreach (var e in Employments.OrderByDescending(x => x.End))
+            var lastDay = until ?? DateOnly.FromDateTime(DateTime.Today);
+
+            foreach (var e in Employments.Where(x => x.Begin <= lastDay).OrderByDescending(x => x.End))
             {
-                var currentDay = e.End;
+                var currentDay = e.End < lastDay ? e.End : lastDay;
                 while (currentDay >= e.Begin)
                 {
                     if (e.GetExpectedMinutes(currentDay) > 0) return currentDay;
@@ -93,7 +95,7 @@ public class Configuration
         }
         catch (Exception ex)
         {
-            throw new Exception("Error loading configuration from cache.", ex);
+            throw new Exception("Error loading configuration.", ex);
         }
     }
 

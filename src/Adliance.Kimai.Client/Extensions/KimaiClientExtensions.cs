@@ -10,7 +10,7 @@ public static class KimaiClientExtensions
     {
         try
         {
-            return await client.GetPaginated<User>("/api/users");
+            return await client.GetPaginated<User>("/api/users?visible=3");
         }
         catch (ApiException ex) when (ex.StatusCode == HttpStatusCode.Forbidden)
         {
