@@ -85,7 +85,7 @@ public class OverviewAction : ActionBase
 
             html.W($"""
                     <tr>
-                      <td>{u.Name}</td>
+                      <td style="white-space:nowrap;">{u.Name}</td>
                       <td style="text-align:right;">{u.ExpectedMinutesNetto / 60d:N2}h</td>
                       <td style="text-align:right;">{u.ExpectedMinutesBrutto / 60d:N2}h</td>
                       <td style="text-align:right;">{u.WorkedTotalMinutesNetto / 60d:N2}h</td>
