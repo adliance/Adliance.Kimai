@@ -8,13 +8,13 @@ public class Absence
     [JsonPropertyName("type")] public string Type { get; set; } = string.Empty;
     [JsonPropertyName("status")] public string Status { get; set; } = string.Empty;
     [JsonPropertyName("date")] public DateTime Date { get; set; }
+    [JsonPropertyName("duration")] public double? Duration { get; set; }
+    [JsonPropertyName("halfDay")] public bool HalfDay { get; set; }
 
     public bool IsVacation => Type == "holiday";
     public DateOnly DateOnly => DateOnly.FromDateTime(Date);
 
     /*
     [JsonPropertyName("id")] public int Id { get; set; }
-    [JsonPropertyName("duration")] public int? Duration { get; set; }
-    [JsonPropertyName("halfDay")] public bool HalfDay { get; set; }
     */
 }

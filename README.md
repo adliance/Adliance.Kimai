@@ -38,12 +38,14 @@ Creates an overview report by fetching data from Kimai.
 **Options:**
 * `-u|--url <url>` (Required): The URL to your Kimai instance. For example: `https://demo.kimai.org/`.
 * `-t|--token <token>` (Required): Your Kimai API token.
+* `--from <date>` (Optional): Calculate the report only starting with (and including) this day. Employments that begin earlier are only calculated starting with this day. Defaults to the beginning of the first employment.
 * `--until <date>` (Optional): Calculate the report only up to (and including) this day, to get the state at this day. Defaults to today.
 
 **Example:**
 ```bash
 dotnet run --project src/Adliance.Kimai.csproj -- overview --url https://your-kimai-instance.com --token your-api-token
 dotnet run --project src/Adliance.Kimai.csproj -- overview --url https://your-kimai-instance.com --token your-api-token --until 2025-12-31
+dotnet run --project src/Adliance.Kimai.csproj -- overview --url https://your-kimai-instance.com --token your-api-token --from 2025-01-01 --until 2025-12-31
 ```
 
 #### `example-config`

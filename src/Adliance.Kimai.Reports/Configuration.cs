@@ -21,16 +21,18 @@ public class Configuration
         [JsonIgnore] public string Name { get; set; } = string.Empty;
         [JsonIgnore] public double ExpectedMinutesNetto { get; set; }
         [JsonIgnore] public double ExpectedMinutesBrutto { get; set; }
-        [JsonIgnore] public double WorkedTotalMinutes { get; set; }
+        [JsonIgnore] public double WorkedTotalMinutesNetto { get; set; }
+        [JsonIgnore] public double WorkedTotalMinutesBrutto { get; set; }
         [JsonIgnore] public double WorkedBillableMinutes { get; set; }
         [JsonIgnore] public double RemainingVacationMinutes { get; set; }
         [JsonIgnore] public int HomeOfficeDays { get; set; }
         [JsonIgnore] public int PublicHolidayDays { get; set; }
         [JsonIgnore] public int VacationDays { get; set; }
-        [JsonIgnore] public int OtherAbsenceDays { get; set; }
+        [JsonIgnore] public double OtherAbsenceMinutes { get; set; }
         [JsonIgnore] public bool FoundInKimai { get; set; }
         [JsonIgnore] public List<Warning> Warnings { get; set; } = [];
-        [JsonIgnore] public double BillablePercent => 100d / WorkedTotalMinutes * WorkedBillableMinutes;
+        [JsonIgnore] public double BillablePercent => 100d / WorkedTotalMinutesNetto * WorkedBillableMinutes;
+        [JsonIgnore] public double ProductivityPercent => 100d / ExpectedMinutesBrutto * WorkedTotalMinutesNetto;
         [JsonIgnore] public double ExpectedBillablePercent { get; set; }
 
         public DateOnly GetLastEmploymentDay(DateOnly? until = null)
@@ -106,19 +108,19 @@ public class Configuration
         foreach (var u in Users)
         {
             var day = u.GetLastEmploymentDay();
-            var overtime = u.WorkedTotalMinutes - u.ExpectedMinutesNetto;
+            var overtime = u.WorkedTotalMinutesNetto - u.ExpectedMinutesNetto;
             var vacationDays = day.MinutesToDays(u.RemainingVacationMinutes, u);
             var vacationOffsetDays = day.MinutesToDays(u.OffsetVacationsMinutes, u);
 
             sb.AppendLine(CultureInfo.InvariantCulture, $"{u.Name}:");
             sb.AppendLine(CultureInfo.InvariantCulture, $"\tExpected: {u.ExpectedMinutesNetto / 60d:N2}h.");
-            sb.AppendLine(CultureInfo.InvariantCulture, $"\tWorked: {u.WorkedTotalMinutes / 60d:N2}h.");
+            sb.AppendLine(CultureInfo.InvariantCulture, $"\tWorked: {u.WorkedTotalMinutesNetto / 60d:N2}h.");
             sb.AppendLine(CultureInfo.InvariantCulture, $"\tOvertime: {overtime / 60d:N2}h + {u.OffsetWorktimeMinutes / 60d:N2}h = {(overtime + u.OffsetWorktimeMinutes) / 60d:N2}h.");
             sb.AppendLine(CultureInfo.InvariantCulture, $"\tVacation: {vacationDays:N2} days + {vacationOffsetDays:N2} days = {vacationDays + vacationOffsetDays:N2} days.");
             sb.AppendLine(CultureInfo.InvariantCulture, $"\tHome Office: {u.HomeOfficeDays:N0} days.");
             sb.AppendLine(CultureInfo.InvariantCulture, $"\tPublic Holidays: {u.PublicHolidayDays:N0} days.");
             sb.AppendLine(CultureInfo.InvariantCulture, $"\tVacation: {u.VacationDays:N0} days.");
-            sb.AppendLine(CultureInfo.InvariantCulture, $"\tOther Abscences: {u.OtherAbsenceDays:N0} days.");
+            sb.AppendLine(CultureInfo.InvariantCulture, $"\tOther Abscences: {u.OtherAbsenceMinutes:N0} minutes.");
         }
 
         return sb.ToString();

@@ -2,7 +2,7 @@ using Adliance.Kimai.Reports.Extensions;
 
 namespace Adliance.Kimai.Reports;
 
-public class CalculationService(Configuration config, Data data, DateOnly until)
+public class CalculationService(Configuration config, Data data, DateOnly from, DateOnly until)
 {
     public void Calculate()
     {
@@ -22,7 +22,9 @@ public class CalculationService(Configuration config, Data data, DateOnly until)
         foreach (var e in user.Employments)
         {
             if (e.Begin > until) continue; // so we can add future employments to the config
+            if (e.End < from) continue; // employments that ended before the "from" day are not part of the calculation
             if (e.End > until) e.End = until; // only calculate up to the "until" day (today by default), default value is DateOnly.Max
+            if (e.Begin < from) e.Begin = from; // only calculate starting with the "from" day (the very beginning by default)
 
             if (e.End < e.Begin) throw new Exception($"End date {e.End} is before start date {e.Begin} (user {user.Username}).");
 
@@ -39,6 +41,7 @@ public class CalculationService(Configuration config, Data data, DateOnly until)
                 if (currentDay.IsPublicHoliday(data))
                 {
                     user.PublicHolidayDays++;
+                    user.WorkedTotalMinutesBrutto += expectedMinutesForThisDay;
                 }
                 else if (currentDay.IsVacationDay(user, data))
                 {
@@ -46,21 +49,21 @@ public class CalculationService(Configuration config, Data data, DateOnly until)
                     {
                         user.RemainingVacationMinutes -= expectedMinutesForThisDay;
                         user.VacationDays++;
+                        user.WorkedTotalMinutesBrutto += expectedMinutesForThisDay;
                     }
-                }
-                else if (currentDay.IsOtherAbsence(user, data))
-                {
-                    user.OtherAbsenceDays++;
                 }
                 else
                 {
                     if (expectedMinutesForThisDay > 0)
                     {
                         if (currentDay.IsHomeOffice(user, data)) user.HomeOfficeDays++;
-                        user.ExpectedMinutesNetto += expectedMinutesForThisDay;
+                        user.ExpectedMinutesNetto += expectedMinutesForThisDay - currentDay.GetOtherAbsenceMinutes(user, data);
+                        user.OtherAbsenceMinutes += currentDay.GetOtherAbsenceMinutes(user, data);
                     }
 
-                    user.WorkedTotalMinutes += currentDay.GetWorkedTotalMinutes(user, data);
+                    user.WorkedTotalMinutesNetto += currentDay.GetWorkedTotalMinutes(user, data);
+                    user.WorkedTotalMinutesBrutto += currentDay.GetWorkedTotalMinutes(user, data);
+                    user.WorkedTotalMinutesBrutto += currentDay.GetOtherAbsenceMinutes(user, data);
                     user.WorkedBillableMinutes += currentDay.GetWorkedBillableMinutes(user, data);
                 }
 

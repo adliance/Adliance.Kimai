@@ -42,6 +42,11 @@ public static class DateTimeExtensions
             return day.GetAbsences(user, data).Count > 0;
         }
 
+        public double GetOtherAbsenceMinutes(Configuration.User user, Data data)
+        {
+            return day.GetAbsences(user, data).Sum(x => (x.Duration ?? 0) / 60d);
+        }
+
         public bool IsHomeOffice(Configuration.User user, Data data)
         {
             return day.GetTimesheets(user, data).Any(x => x.IsHomeOffice);
