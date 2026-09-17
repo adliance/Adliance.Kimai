@@ -19,7 +19,8 @@ public class Configuration
         [JsonPropertyName("employments")] public List<Employment> Employments { get; set; } = [];
 
         [JsonIgnore] public string Name { get; set; } = string.Empty;
-        [JsonIgnore] public double ExpectedMinutes { get; set; }
+        [JsonIgnore] public double ExpectedMinutesNetto { get; set; }
+        [JsonIgnore] public double ExpectedMinutesBrutto { get; set; }
         [JsonIgnore] public double WorkedTotalMinutes { get; set; }
         [JsonIgnore] public double WorkedBillableMinutes { get; set; }
         [JsonIgnore] public double RemainingVacationMinutes { get; set; }
@@ -105,12 +106,12 @@ public class Configuration
         foreach (var u in Users)
         {
             var day = u.GetLastEmploymentDay();
-            var overtime = u.WorkedTotalMinutes - u.ExpectedMinutes;
+            var overtime = u.WorkedTotalMinutes - u.ExpectedMinutesNetto;
             var vacationDays = day.MinutesToDays(u.RemainingVacationMinutes, u);
             var vacationOffsetDays = day.MinutesToDays(u.OffsetVacationsMinutes, u);
 
             sb.AppendLine(CultureInfo.InvariantCulture, $"{u.Name}:");
-            sb.AppendLine(CultureInfo.InvariantCulture, $"\tExpected: {u.ExpectedMinutes / 60d:N2}h.");
+            sb.AppendLine(CultureInfo.InvariantCulture, $"\tExpected: {u.ExpectedMinutesNetto / 60d:N2}h.");
             sb.AppendLine(CultureInfo.InvariantCulture, $"\tWorked: {u.WorkedTotalMinutes / 60d:N2}h.");
             sb.AppendLine(CultureInfo.InvariantCulture, $"\tOvertime: {overtime / 60d:N2}h + {u.OffsetWorktimeMinutes / 60d:N2}h = {(overtime + u.OffsetWorktimeMinutes) / 60d:N2}h.");
             sb.AppendLine(CultureInfo.InvariantCulture, $"\tVacation: {vacationDays:N2} days + {vacationOffsetDays:N2} days = {vacationDays + vacationOffsetDays:N2} days.");

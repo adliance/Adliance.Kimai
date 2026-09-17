@@ -29,7 +29,9 @@ public class CalculationService(Configuration config, Data data, DateOnly until)
             var currentDay = e.Begin;
             while (currentDay <= e.End)
             {
-                var expectedMinutes = e.GetExpectedMinutes(currentDay);
+                var expectedMinutesForThisDay = e.GetExpectedMinutes(currentDay);
+                if (expectedMinutesForThisDay > 0) user.ExpectedMinutesBrutto += expectedMinutesForThisDay;
+
                 var earnedVacationMinutesForThisDay = e.MinutesPerDay * (25.0 / 5.0 * e.Weekdays.Length) / (DateTime.IsLeapYear(currentDay.Year) ? 366.0 : 365.0);
                 var expectedBillableOnThisDay = e.GetExpectedBillablePercent(currentDay);
                 if (expectedBillableOnThisDay.HasValue) expectedBillable.Add(expectedBillableOnThisDay.Value);
@@ -40,9 +42,9 @@ public class CalculationService(Configuration config, Data data, DateOnly until)
                 }
                 else if (currentDay.IsVacationDay(user, data))
                 {
-                    if (expectedMinutes > 0)
+                    if (expectedMinutesForThisDay > 0)
                     {
-                        user.RemainingVacationMinutes -= expectedMinutes;
+                        user.RemainingVacationMinutes -= expectedMinutesForThisDay;
                         user.VacationDays++;
                     }
                 }
@@ -52,10 +54,10 @@ public class CalculationService(Configuration config, Data data, DateOnly until)
                 }
                 else
                 {
-                    if (expectedMinutes > 0)
+                    if (expectedMinutesForThisDay > 0)
                     {
                         if (currentDay.IsHomeOffice(user, data)) user.HomeOfficeDays++;
-                        user.ExpectedMinutes += expectedMinutes;
+                        user.ExpectedMinutesNetto += expectedMinutesForThisDay;
                     }
 
                     user.WorkedTotalMinutes += currentDay.GetWorkedTotalMinutes(user, data);

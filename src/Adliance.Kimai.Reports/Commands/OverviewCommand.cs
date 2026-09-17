@@ -36,7 +36,7 @@ public class OverviewAction : ActionBase
                <thead>
                  <tr>
                    <th>User</th>
-                   <th style="text-align:right;">Expected</th>
+                   <th style="text-align:right;" title="Expected work hours excluding holidays, vacations etc. (and including).">Expected</th>
                    <th style="text-align:right;">Worked</th>
                    <th style="text-align:right;">Billable</th>
                    <th style="text-align:right;">Overtime</th>
@@ -60,14 +60,14 @@ public class OverviewAction : ActionBase
         foreach (var u in users)
         {
             var day = u.GetLastEmploymentDay(until);
-            var overtime = u.WorkedTotalMinutes - u.ExpectedMinutes;
+            var overtime = u.WorkedTotalMinutes - u.ExpectedMinutesNetto;
             var vacationDays = day.MinutesToDays(u.RemainingVacationMinutes, u);
             var vacationOffsetDays = day.MinutesToDays(u.OffsetVacationsMinutes, u);
 
             html.W($"""
                     <tr>
                       <td>{u.Name}</td>
-                      <td style="text-align:right;">{u.ExpectedMinutes / 60d:N2}h</td>
+                      <td style="text-align:right;">{u.ExpectedMinutesNetto / 60d:N2}h ({u.ExpectedMinutesBrutto / 60d:N2}h)</td>
                       <td style="text-align:right;">{u.WorkedTotalMinutes / 60d:N2}h</td>
                       <td style="text-align:right;" title="{u.BillablePercent:N2}% / {u.ExpectedBillablePercent:N2}%">
                         {html.Tag("mark", u.BillablePercent < u.ExpectedBillablePercent, u.BillablePercent.ToString("N0", CultureInfo.InvariantCulture) + "/" + u.ExpectedBillablePercent.ToString("N0", CultureInfo.InvariantCulture) + "%")}
