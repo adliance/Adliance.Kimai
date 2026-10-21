@@ -59,7 +59,7 @@ public class Data
             PublicHolidays = await client.GetPaginated<PublicHoliday>("/api/public-holidays")
         };
 
-        result.Timesheets = await client.GetPaginatedTimesheets(result.Users.Select(x => x.Id).ToArray());
+        result.Timesheets = await client.GetPaginatedTimesheetsAsync(result.Users.Select(x => x.Id).ToArray());
         result.Absences = await client.GetAbsencesAsync(result.Users.Select(x => x.Id));
 
         Console.WriteLine("done.");

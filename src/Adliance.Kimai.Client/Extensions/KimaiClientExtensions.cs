@@ -18,6 +18,12 @@ public static class KimaiClientExtensions
         }
     }
 
+    public static async Task<List<Timesheet>> GetPaginatedTimesheetsAsync(this KimaiClient client, int[] userIds)
+    {
+        var query = userIds.Aggregate("", (current, userId) => current + $"users[]={userId}&");
+        return await client.GetPaginated<Timesheet>($"api/timesheets?{query.TrimEnd('&')}");
+    }
+
     public static async Task<List<Absence>> GetAbsencesAsync(this KimaiClient client, IEnumerable<int> userIds)
     {
         var result = new List<Absence>();
