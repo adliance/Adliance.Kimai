@@ -1,7 +1,6 @@
 using System.Globalization;
 using System.Text.Json;
 using Adliance.Kimai.Client.Exceptions;
-using Adliance.Kimai.Client.Models;
 
 namespace Adliance.Kimai.Client;
 
@@ -14,13 +13,6 @@ public class KimaiClient : IDisposable
         _client = new HttpClient();
         _client.BaseAddress = new Uri(baseUrl);
         _client.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
-    }
-
-    public async Task<List<Timesheet>> GetPaginatedTimesheets(int[] userIds)
-    {
-        var query = "";
-        foreach (var userId in userIds) query += $"users[]={userId}&";
-        return await GetPaginated<Timesheet>($"api/timesheets?{query.TrimEnd('&')}");
     }
 
     public async Task<List<T>> GetPaginated<T>(string url)

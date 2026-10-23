@@ -59,7 +59,16 @@ public class Data
             PublicHolidays = await client.GetPaginated<PublicHoliday>("/api/public-holidays")
         };
 
-        result.Timesheets = await client.GetPaginatedTimesheets(result.Users.Select(x => x.Id).ToArray());
+        try
+        {
+            result.Timesheets = await client.GetPaginatedTimesheetsAsync(result.Users.Select(x => x.Id).ToArray());
+        }
+        catch (ApiException ex) when (ex.StatusCode == HttpStatusCode.Forbidden)
+        {
+            Console.WriteLine("Exclude disabled users to get timesheets for accessible users.");
+            result.Timesheets = await client.GetPaginatedTimesheetsAsync(result.Users.Where(x => x.Enabled).Select(x => x.Id).ToArray());
+        }
+
         result.Absences = await client.GetAbsencesAsync(result.Users.Select(x => x.Id));
 
         Console.WriteLine("done.");
