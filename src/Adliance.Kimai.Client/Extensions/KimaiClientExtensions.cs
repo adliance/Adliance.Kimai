@@ -26,10 +26,16 @@ public static class KimaiClientExtensions
 
     public static async Task<List<Absence>> GetAbsencesAsync(this KimaiClient client, IEnumerable<int> userIds)
     {
+       return await client.GetAbsencesAsync(userIds, DateTime.MinValue, DateTime.MaxValue);
+    }
+
+    public static async Task<List<Absence>> GetAbsencesAsync(this KimaiClient client, IEnumerable<int> userIds, DateTime begin, DateTime end)
+    {
         var result = new List<Absence>();
         foreach (var userId in userIds)
         {
-            result.AddRange(await client.GetPaginated<Absence>($"/api/absences?user={userId}"));
+            var url =$"/api/absences?user={userId}&begin={begin:yyyy-MM-ddTHH:mm:ss}&end={end:yyyy-MM-ddTHH:mm:ss}";
+            result.AddRange(await client.GetPaginated<Absence>(url));
         }
 
         return result;
