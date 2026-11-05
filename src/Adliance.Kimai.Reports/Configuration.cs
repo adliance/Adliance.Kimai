@@ -44,7 +44,11 @@ public class Configuration
                 var currentDay = e.End < lastDay ? e.End : lastDay;
                 while (currentDay >= e.Begin)
                 {
-                    if (e.GetExpectedMinutes(currentDay) > 0) return currentDay;
+                    if (e.GetExpectedMinutes(currentDay) > 0)
+                    {
+                        return currentDay;
+                    }
+
                     currentDay = currentDay.AddDays(-1);
                 }
             }
@@ -76,15 +80,31 @@ public class Configuration
 
         public double GetExpectedMinutes(DateOnly date)
         {
-            if (date < Begin || date > End) return 0;
-            if (!Weekdays.Contains(date.DayOfWeek)) return 0;
+            if (date < Begin || date > End)
+            {
+                return 0;
+            }
+
+            if (!Weekdays.Contains(date.DayOfWeek))
+            {
+                return 0;
+            }
+
             return MinutesPerDay;
         }
 
         public double? GetExpectedBillablePercent(DateOnly date)
         {
-            if (date < Begin || date > End) return null;
-            if (!Weekdays.Contains(date.DayOfWeek)) return null;
+            if (date < Begin || date > End)
+            {
+                return null;
+            }
+
+            if (!Weekdays.Contains(date.DayOfWeek))
+            {
+                return null;
+            }
+
             return ExpectedBillablePercent;
         }
     }

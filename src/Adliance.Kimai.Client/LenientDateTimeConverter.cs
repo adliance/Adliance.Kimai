@@ -36,7 +36,11 @@ public sealed class LenientDateTimeNullableConverter : JsonConverter<DateTime?>
     public override DateTime? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         var s = reader.GetString();
-        if (string.IsNullOrWhiteSpace(s)) return null;
+        if (string.IsNullOrWhiteSpace(s))
+        {
+            return null;
+        }
+
         return DateTime.ParseExact(s, AllowedFormats, CultureInfo.InvariantCulture, DateTimeStyles.None);
     }
 

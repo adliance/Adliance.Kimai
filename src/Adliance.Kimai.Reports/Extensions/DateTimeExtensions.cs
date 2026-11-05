@@ -21,9 +21,17 @@ public static class DateTimeExtensions
             try
             {
                 var employment = user.Employments.SingleOrDefault(x => day >= x.Begin && day <= x.End);
-                if (employment == null) throw new Exception($"No employment found for {user.Username} on {day}.");
+                if (employment == null)
+                {
+                    throw new Exception($"No employment found for {user.Username} on {day}.");
+                }
+
                 var expectedMinutes = employment.GetExpectedMinutes(day);
-                if (expectedMinutes > 0) return minutes / expectedMinutes;
+                if (expectedMinutes > 0)
+                {
+                    return minutes / expectedMinutes;
+                }
+
                 return 0;
             }
             catch (InvalidOperationException)
@@ -72,8 +80,15 @@ public static class DateTimeExtensions
             {
                 var begin = t.Begin;
                 var end = t.End ?? begin;
-                if (begin < day.ToDateTime()) begin = day.ToDateTime();
-                if (end > day.ToDateTime().AddDays(1)) end = day.ToDateTime().AddDays(1);
+                if (begin < day.ToDateTime())
+                {
+                    begin = day.ToDateTime();
+                }
+
+                if (end > day.ToDateTime().AddDays(1))
+                {
+                    end = day.ToDateTime().AddDays(1);
+                }
 
                 var minutes = end - begin;
                 result += minutes.TotalMinutes;
@@ -98,7 +113,11 @@ public static class DateTimeExtensions
                 .Where(x => x.User?.Id == kimaiUser.Id)
                 .Where(x => day == x.DateOnly)
                 .ToList();
-            if (absences.Count > 1) throw new Exception($"More than one absence found for {user.Username} on {day}.");
+            if (absences.Count > 1)
+            {
+                throw new Exception($"More than one absence found for {user.Username} on {day}.");
+            }
+
             return absences;
         }
     }

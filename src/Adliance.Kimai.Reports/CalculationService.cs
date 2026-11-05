@@ -6,13 +6,20 @@ public class CalculationService(Configuration config, Data data, DateOnly from, 
 {
     public void Calculate()
     {
-        foreach (var u in config.Users) CalculateUser(u);
+        foreach (var u in config.Users)
+        {
+            CalculateUser(u);
+        }
     }
 
     private void CalculateUser(Configuration.User user)
     {
         var kimaiUser = data.Users.SingleOrDefault(x => x.Username.Equals(user.Username, StringComparison.OrdinalIgnoreCase));
-        if (kimaiUser == null) return;
+        if (kimaiUser == null)
+        {
+            return;
+        }
+
         user.Name = kimaiUser.Title;
         user.FoundInKimai = true;
 
@@ -21,22 +28,46 @@ public class CalculationService(Configuration config, Data data, DateOnly from, 
 
         foreach (var e in user.Employments)
         {
-            if (e.Begin > until) continue; // so we can add future employments to the config
-            if (e.End < from) continue; // employments that ended before the "from" day are not part of the calculation
-            if (e.End > until) e.End = until; // only calculate up to the "until" day (today by default), default value is DateOnly.Max
-            if (e.Begin < from) e.Begin = from; // only calculate starting with the "from" day (the very beginning by default)
+            if (e.Begin > until)
+            {
+                continue; // so we can add future employments to the config
+            }
 
-            if (e.End < e.Begin) throw new Exception($"End date {e.End} is before start date {e.Begin} (user {user.Username}).");
+            if (e.End < from)
+            {
+                continue; // employments that ended before the "from" day are not part of the calculation
+            }
+
+            if (e.End > until)
+            {
+                e.End = until; // only calculate up to the "until" day (today by default), default value is DateOnly.Max
+            }
+
+            if (e.Begin < from)
+            {
+                e.Begin = from; // only calculate starting with the "from" day (the very beginning by default)
+            }
+
+            if (e.End < e.Begin)
+            {
+                throw new Exception($"End date {e.End} is before start date {e.Begin} (user {user.Username}).");
+            }
 
             var currentDay = e.Begin;
             while (currentDay <= e.End)
             {
                 var expectedMinutesForThisDay = e.GetExpectedMinutes(currentDay);
-                if (expectedMinutesForThisDay > 0) user.ExpectedMinutesBrutto += expectedMinutesForThisDay;
+                if (expectedMinutesForThisDay > 0)
+                {
+                    user.ExpectedMinutesBrutto += expectedMinutesForThisDay;
+                }
 
                 var earnedVacationMinutesForThisDay = e.MinutesPerDay * (25.0 / 5.0 * e.Weekdays.Length) / (DateTime.IsLeapYear(currentDay.Year) ? 366.0 : 365.0);
                 var expectedBillableOnThisDay = e.GetExpectedBillablePercent(currentDay);
-                if (expectedBillableOnThisDay.HasValue) expectedBillable.Add(expectedBillableOnThisDay.Value);
+                if (expectedBillableOnThisDay.HasValue)
+                {
+                    expectedBillable.Add(expectedBillableOnThisDay.Value);
+                }
 
                 if (currentDay.IsPublicHoliday(data))
                 {
@@ -56,7 +87,11 @@ public class CalculationService(Configuration config, Data data, DateOnly from, 
                 {
                     if (expectedMinutesForThisDay > 0)
                     {
-                        if (currentDay.IsHomeOffice(user, data)) user.HomeOfficeDays++;
+                        if (currentDay.IsHomeOffice(user, data))
+                        {
+                            user.HomeOfficeDays++;
+                        }
+
                         user.ExpectedMinutesNetto += expectedMinutesForThisDay - currentDay.GetOtherAbsenceMinutes(user, data);
                         user.OtherAbsenceMinutes += currentDay.GetOtherAbsenceMinutes(user, data);
                     }
@@ -87,7 +122,10 @@ public class CalculationService(Configuration config, Data data, DateOnly from, 
             .ToList();
 
         // simple hack, if we have a Dienstreise text on this day, we ignore certain warnings regarding max work times
-        if (timesheets.Any(x => x.Description?.Contains("Dienstreise", StringComparison.OrdinalIgnoreCase) == true)) return;
+        if (timesheets.Any(x => x.Description?.Contains("Dienstreise", StringComparison.OrdinalIgnoreCase) == true))
+        {
+            return;
+        }
 
         const double maxMinutesPerDay = 12 * 60;
         const double maxMinutesWithoutBreak = 6 * 60;

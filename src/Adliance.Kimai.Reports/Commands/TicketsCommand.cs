@@ -49,8 +49,15 @@ public class TicketsAction : ActionBase
         var to = ParseResult.GetValue(TicketsCommand.ToOption).Date;
 
         // if not specified, use the last month as from/to
-        if (from == default) from = new DateTime(DateTime.Now.AddMonths(-1).Year, DateTime.Now.AddMonths(-1).Month, 1, 0, 0, 0);
-        if (to == default) to = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddSeconds(-1);
+        if (from == default)
+        {
+            from = new DateTime(DateTime.Now.AddMonths(-1).Year, DateTime.Now.AddMonths(-1).Month, 1, 0, 0, 0);
+        }
+
+        if (to == default)
+        {
+            to = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddSeconds(-1);
+        }
 
         var groups = FindTickets(data, from, to);
         await EnrichWithDataFromAdo(groups);
@@ -206,7 +213,11 @@ public class TicketsAction : ActionBase
                         """);
 
                 var sortedTickets = tickets.OrderByDescending(x => x.Duration).ToList();
-                if (unknownTicket.Timesheets.Count > 0) sortedTickets.Add(unknownTicket);
+                if (unknownTicket.Timesheets.Count > 0)
+                {
+                    sortedTickets.Add(unknownTicket);
+                }
+
                 foreach (var ticket in sortedTickets)
                 {
                     if (!string.IsNullOrEmpty(ticket.AdoTitle))
@@ -250,16 +261,28 @@ public class TicketsAction : ActionBase
     private static string? FindTicketIdentifier(Timesheet timesheet)
     {
         var text = timesheet.Description;
-        if (string.IsNullOrWhiteSpace(text)) return null;
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return null;
+        }
 
         var match = Regex.Match(text, @"\#(\d{1,5})");
-        if (match.Success) return match.Groups[1].Value;
+        if (match.Success)
+        {
+            return match.Groups[1].Value;
+        }
 
         match = Regex.Match(text, @"(\w{2,5}\-\d{2,5})");
-        if (match.Success) return match.Groups[1].Value;
+        if (match.Success)
+        {
+            return match.Groups[1].Value;
+        }
 
         match = Regex.Match(text, @"(\d{3,5})");
-        if (match.Success) return match.Groups[1].Value;
+        if (match.Success)
+        {
+            return match.Groups[1].Value;
+        }
 
         return null;
     }

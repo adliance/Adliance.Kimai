@@ -57,11 +57,21 @@ public class ProjectReportAction : ActionBase
         var poolOffset = ParseResult.GetValue(ProjectReportCommand.OffsetPoolSize);
 
         var project = data.Projects.FirstOrDefault(x => x.Name.Equals(projectName, StringComparison.OrdinalIgnoreCase));
-        if (project == null) throw new Exception($"Project {projectName} not found.");
+        if (project == null)
+        {
+            throw new Exception($"Project {projectName} not found.");
+        }
 
         // if not specified, use the last month as from/to
-        if (from == default) from = new DateTime(DateTime.Now.AddMonths(-1).Year, DateTime.Now.AddMonths(-1).Month, 1, 0, 0, 0);
-        if (to == default) to = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddSeconds(-1);
+        if (from == default)
+        {
+            from = new DateTime(DateTime.Now.AddMonths(-1).Year, DateTime.Now.AddMonths(-1).Month, 1, 0, 0, 0);
+        }
+
+        if (to == default)
+        {
+            to = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddSeconds(-1);
+        }
 
         var matchingEntries = data.Timesheets
             .Where(x => x.Project == project.Id && x.Begin >= from && x.End <= to)
@@ -76,10 +86,22 @@ public class ProjectReportAction : ActionBase
         var file = new FileInfo(Path.Combine(basePath, $"Project Report {projectName}.html"));
 
         string subTitle;
-        if (from == default && to == DateTime.MaxValue) subTitle = "All project time entries.";
-        else if (from == default) subTitle = $"Project time entries until {to:yyyy-MM-dd}.";
-        else if (to == DateTime.MaxValue) subTitle = $"Project time entries from {from:yyyy-MM-dd}.";
-        else subTitle = $"Project time entries from {from:yyyy-MM-dd} to {to:yyyy-MM-dd}.";
+        if (from == default && to == DateTime.MaxValue)
+        {
+            subTitle = "All project time entries.";
+        }
+        else if (from == default)
+        {
+            subTitle = $"Project time entries until {to:yyyy-MM-dd}.";
+        }
+        else if (to == DateTime.MaxValue)
+        {
+            subTitle = $"Project time entries from {from:yyyy-MM-dd}.";
+        }
+        else
+        {
+            subTitle = $"Project time entries from {from:yyyy-MM-dd} to {to:yyyy-MM-dd}.";
+        }
 
         var html = new HtmlWriter($"Project Report for Project {projectName}", subTitle);
 

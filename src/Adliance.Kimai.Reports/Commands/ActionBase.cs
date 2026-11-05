@@ -15,9 +15,16 @@ public abstract class ActionBase : AsynchronousCommandLineAction
         var url = parseResult.GetRequiredValue(CommandBase.UrlOption);
         var token = parseResult.GetRequiredValue(CommandBase.TokenOption);
         var configPath = parseResult.GetValue(CommandBase.ConfigPath);
-        if (string.IsNullOrWhiteSpace(configPath)) configPath = "./config.json";
+        if (string.IsNullOrWhiteSpace(configPath))
+        {
+            configPath = "./config.json";
+        }
+
         var outputPath = parseResult.GetValue(CommandBase.OutputPath);
-        if (string.IsNullOrWhiteSpace(outputPath)) outputPath = "./";
+        if (string.IsNullOrWhiteSpace(outputPath))
+        {
+            outputPath = "./";
+        }
 
         try
         {

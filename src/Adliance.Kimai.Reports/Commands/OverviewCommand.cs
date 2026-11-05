@@ -39,7 +39,11 @@ public class OverviewAction : ActionBase
         var file = new FileInfo(Path.Combine(basePath, "overview.html"));
 
         var subTitle = $"Generated on {DateTime.Now:yyyy-MM-dd HH:mm}, calculated up to and including {until:yyyy-MM-dd}";
-        if (from > DateOnly.MinValue) subTitle += $", starting with {from:yyyy-MM-dd}";
+        if (from > DateOnly.MinValue)
+        {
+            subTitle += $", starting with {from:yyyy-MM-dd}";
+        }
+
         var html = new HtmlWriter("Overview", subTitle + ".");
 
         html.W("""

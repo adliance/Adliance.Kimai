@@ -1,4 +1,3 @@
-using Adliance.Buddy.DateTime;
 using Adliance.Kimai.Client;
 using Adliance.Kimai.Client.Extensions;
 using Ical.Net;
@@ -13,7 +12,10 @@ public class VacationICalService(IOptions<KimaiOptions> kimaiOptions, IOptions<A
 {
     public async Task<string> GetICalFeedAsync(string? key)
     {
-        if (!string.IsNullOrWhiteSpace(authOptions.Value.ICalAccessKey) && !authOptions.Value.ICalAccessKey.Equals(key, StringComparison.InvariantCultureIgnoreCase)) throw new UnauthorizedAccessException();
+        if (!string.IsNullOrWhiteSpace(authOptions.Value.ICalAccessKey) && !authOptions.Value.ICalAccessKey.Equals(key, StringComparison.InvariantCultureIgnoreCase))
+        {
+            throw new UnauthorizedAccessException();
+        }
 
         using var client = new KimaiClient(kimaiOptions.Value.BaseUrl, kimaiOptions.Value.ApiKey);
 
@@ -55,7 +57,10 @@ public class VacationICalService(IOptions<KimaiOptions> kimaiOptions, IOptions<A
 
     private static IEnumerable<(DateOnly Start, DateOnly End)> GroupConsecutiveDays(List<DateOnly> days)
     {
-        if (days.Count == 0) yield break;
+        if (days.Count == 0)
+        {
+            yield break;
+        }
 
         var start = days[0];
         var end = days[0];

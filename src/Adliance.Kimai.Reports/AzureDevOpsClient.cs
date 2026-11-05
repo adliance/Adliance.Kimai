@@ -22,7 +22,10 @@ public class AzureDevOpsClient
     public async Task<List<WorkItem>> LoadWorkItems(IEnumerable<int> ids)
     {
         var idList = ids.OrderBy(x => x).ToList();
-        if (idList.Count == 0) return [];
+        if (idList.Count == 0)
+        {
+            return [];
+        }
 
         var results = new List<WorkItem>();
 
@@ -40,7 +43,10 @@ public class AzureDevOpsClient
                 foreach (var id in batch)
                 {
                     var single = await FetchBatch([id]);
-                    if (single != null) results.AddRange(single);
+                    if (single != null)
+                    {
+                        results.AddRange(single);
+                    }
                 }
             }
         }
@@ -54,8 +60,15 @@ public class AzureDevOpsClient
         var idsParam = string.Join(",", ids);
         var url = $"_apis/wit/workitems?ids={idsParam}&fields=System.Title,System.State,Microsoft.VSTS.Scheduling.OriginalEstimate&$expand=Links&api-version=7.1";
         var response = await _http.GetAsync(url);
-        if (!response.IsSuccessStatusCode) return null;
-        if (response.StatusCode == (HttpStatusCode)203) throw new Exception("Azure DevOps authentication failed.");
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        if (response.StatusCode == (HttpStatusCode)203)
+        {
+            throw new Exception("Azure DevOps authentication failed.");
+        }
 
         var json = await response.Content.ReadAsStringAsync();
         var result = JsonSerializer.Deserialize<WorkItemsResponse>(json, LenientJsonOptions.Instance);

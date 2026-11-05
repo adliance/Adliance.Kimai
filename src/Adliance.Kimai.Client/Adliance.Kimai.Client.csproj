@@ -19,7 +19,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Adliance.Buddy.CodeStyle" Version="8.0.0.10"/>
+    <PackageReference Include="Adliance.Buddy.CodeStyle" Version="8.2.0.1" />
   </ItemGroup>
 
 </Project>

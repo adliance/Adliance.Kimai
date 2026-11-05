@@ -24,8 +24,15 @@ public class KimaiClient : IDisposable
 
         while (currentPage <= totalPages)
         {
-            if (url.Contains('?')) url += "&";
-            else url += "?";
+            if (url.Contains('?'))
+            {
+                url += "&";
+            }
+            else
+            {
+                url += "?";
+            }
+
             url += $"size={size}&page={currentPage}";
 
             var response = await _client.GetAsync($"{url}");
