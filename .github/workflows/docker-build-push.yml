@@ -8,6 +8,7 @@ on:
     branches: [ main ]
     paths:
       - 'src/Adliance.Kimai.Vacations/**'
+      - 'src/Adliance.Kimai.Client/**'
       - '.github/workflows/docker-build-push.yml'
 
 jobs:
