@@ -12,6 +12,7 @@ public class Absence
     [JsonPropertyName("halfDay")] public bool HalfDay { get; set; }
 
     public bool IsVacation => Type == "holiday";
+    public bool IsTimeOff => Type == "time_off";
     public DateOnly DateOnly => DateOnly.FromDateTime(Date);
 
     /*

@@ -22,31 +22,34 @@ public class VacationICalService(IOptions<KimaiOptions> kimaiOptions, IOptions<A
         var users = await client.GetUsersAsync();
         var absences = await client.GetAbsencesAsync(users.Select(u => u.Id));
 
-        var approvedVacations = absences
-            .Where(a => a is { IsVacation: true, Status: "approved" })
+        var approvedAbsences = absences
+            .Where(a => a.Status == "approved" && (a.IsVacation || a.IsTimeOff))
             .OrderBy(a => a.Date)
             .ToList();
 
         var calendar = new Calendar();
         calendar.Properties.Add(new CalendarProperty("X-WR-CALNAME", "Vacations"));
 
-        var byUser = approvedVacations
-            .GroupBy(a => a.User?.Id ?? 0)
-            .OrderBy(g => g.First().User?.Title ?? g.First().User?.Username ?? "");
+        var byUserAndType = approvedAbsences
+            .GroupBy(a => (UserId: a.User?.Id ?? 0, a.IsTimeOff))
+            .OrderBy(g => g.First().User?.Title ?? g.First().User?.Username ?? "")
+            .ThenBy(g => g.Key.IsTimeOff);
 
-        foreach (var group in byUser)
+        foreach (var group in byUserAndType)
         {
             var userName = group.First().User?.Title ?? group.First().User?.Username ?? "Unknown";
-            var days = group.Select(a => a.DateOnly).OrderBy(d => d).ToList();
+            var summaryPrefix = group.Key.IsTimeOff ? "Zeitausgleich" : "Urlaub";
+            var uidSuffix = group.Key.IsTimeOff ? "-timeoff" : ""; // keep existing UIDs of vacation events stable
+            var days = group.Select(a => a.DateOnly).Distinct().OrderBy(d => d).ToList();
 
             foreach (var (start, end) in GroupConsecutiveDays(days))
             {
                 var ev = new CalendarEvent
                 {
-                    Summary = $"Urlaub: {userName}",
+                    Summary = $"{summaryPrefix}: {userName}",
                     DtStart = new CalDateTime(start.Year, start.Month, start.Day),
                     DtEnd = new CalDateTime(end.Year, end.Month, end.Day),
-                    Uid = $"{group.Key}-{start:yyyy-MM-dd}-{end:yyyy-MM-dd}"
+                    Uid = $"{group.Key.UserId}-{start:yyyy-MM-dd}-{end:yyyy-MM-dd}{uidSuffix}"
                 };
                 calendar.Events.Add(ev);
             }
