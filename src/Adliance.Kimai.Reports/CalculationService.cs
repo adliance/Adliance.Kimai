@@ -121,11 +121,17 @@ public class CalculationService(Configuration config, Data data, DateOnly from, 
             var end = e.End > until ? until : e.End;
             for (var day = e.Begin; day <= end; day = day.AddDays(1))
             {
-                user.RemainingVacationEntitlementMinutes += GetEntitledVacationMinutes(user, day);
+                var (entitledMinutes, isAliquot) = GetEntitledVacationMinutes(user, day);
+                if (entitledMinutes != 0)
+                {
+                    user.RemainingVacationEntitlementMinutes += entitledMinutes;
+                    user.VacationEntitlementEntries.Add(new Configuration.User.VacationEntry(day, entitledMinutes, isAliquot ? Configuration.User.VacationEntryType.Aliquot : Configuration.User.VacationEntryType.Entitlement));
+                }
 
-                if (!day.IsPublicHoliday(data) && day.IsVacationDay(user, data))
+                if (!day.IsPublicHoliday(data) && day.IsVacationDay(user, data) && e.GetExpectedMinutes(day) > 0)
                 {
                     user.RemainingVacationEntitlementMinutes -= e.GetExpectedMinutes(day);
+                    user.VacationEntitlementEntries.Add(new Configuration.User.VacationEntry(day, -e.GetExpectedMinutes(day), Configuration.User.VacationEntryType.Used));
                 }
             }
         }
@@ -180,7 +186,7 @@ public class CalculationService(Configuration config, Data data, DateOnly from, 
     /// changes of the working days (e.g. from 5 to 4 days a week) as well as the end of the employment relationship
     /// within the working year (which caps the entitlement to the aliquot part, § 10 UrlG) are considered.
     /// </summary>
-    private static double GetEntitledVacationMinutes(Configuration.User user, DateOnly day)
+    private static (double Minutes, bool IsAliquot) GetEntitledVacationMinutes(Configuration.User user, DateOnly day)
     {
         var (relationshipStart, relationshipEnd) = GetEmploymentRelationship(user, day);
         var fullYears = GetFullYearsBetween(relationshipStart, day);
@@ -199,7 +205,7 @@ public class CalculationService(Configuration config, Data data, DateOnly from, 
             var entitlementDay = fullYears == 0 ? sixMonthsAfterStart : workingYearStart;
             if (entitlementDay < day)
             {
-                return GetAliquotVacationMinutes(user, day, workingYearEnd, daysInWorkingYear);
+                return (GetAliquotVacationMinutes(user, day, workingYearEnd, daysInWorkingYear), false);
             }
         }
 
@@ -207,25 +213,25 @@ public class CalculationService(Configuration config, Data data, DateOnly from, 
         {
             if (day < sixMonthsAfterStart)
             {
-                return GetAliquotVacationMinutes(user, day, day, daysInWorkingYear);
+                return (GetAliquotVacationMinutes(user, day, day, daysInWorkingYear), true);
             }
 
             if (day == sixMonthsAfterStart)
             {
                 // the entitlement for the whole working year, minus what was already granted aliquot in the first 6 months
-                return GetAliquotVacationMinutes(user, workingYearStart, workingYearEnd, daysInWorkingYear)
-                       - GetAliquotVacationMinutes(user, workingYearStart, sixMonthsAfterStart.AddDays(-1), daysInWorkingYear);
+                return (GetAliquotVacationMinutes(user, workingYearStart, workingYearEnd, daysInWorkingYear)
+                        - GetAliquotVacationMinutes(user, workingYearStart, sixMonthsAfterStart.AddDays(-1), daysInWorkingYear), false);
             }
 
-            return 0;
+            return (0, false);
         }
 
         if (day == workingYearStart)
         {
-            return GetAliquotVacationMinutes(user, workingYearStart, workingYearEnd, daysInWorkingYear);
+            return (GetAliquotVacationMinutes(user, workingYearStart, workingYearEnd, daysInWorkingYear), false);
         }
 
-        return 0;
+        return (0, false);
     }
 
     /// <summary>

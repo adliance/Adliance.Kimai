@@ -139,7 +139,132 @@ public class OverviewAction : ActionBase
             }
         }
 
+        WriteVacationTable(html, users, until);
+
         await File.WriteAllTextAsync(file.FullName, html.ToString());
         Console.WriteLine($"File \"{file.FullName}\" created.");
+    }
+
+    /// <summary>
+    /// A table that shows per user and calendar year, when vacation entitlement was added and how much vacation was used,
+    /// to make it easy to understand how the remaining vacation (entitlement) is calculated.
+    /// </summary>
+    private static void WriteVacationTable(HtmlWriter html, List<Configuration.User> users, DateOnly until)
+    {
+        if (users.Count == 0)
+        {
+            return;
+        }
+
+        const string newLine = "&#10;";
+        var firstYear = users.SelectMany(x => x.Employments).Min(x => x.Begin).Year;
+        var years = Enumerable.Range(firstYear, Math.Max(0, until.Year - firstYear + 1)).ToList();
+
+        html.W($"""
+                <h3 id="vacation">Vacation</h3>
+                <p>
+                  Vacation according to the Austrian vacation law, per calendar year:
+                  <code>+</code> is the entitlement that was added in this year, <code>-</code> is the vacation that was used in this year.
+                  During the first 6 months of an employment, the entitlement grows day by day. After 6 months, the entitlement for the whole first working year is added,
+                  and then the entitlement for the whole working year at the start of each working year (the anniversary of the employment).
+                  All values are in days, based on the current hours per day of the user. Hover over a value for details.
+                </p>
+                <table class="striped">
+                <thead>
+                  <tr>
+                    <th>User</th>
+                    <th style="text-align:center;" title="The current hours per day (which are used to convert the vacation to days) and the current days per week.">Hours/Day (Days/Week)</th>
+                    <th style="text-align:center;" title="Remaining vacation from before {firstYear}.">Before {firstYear}</th>
+                    {string.Join(Environment.NewLine, years.Select(y => $"<th style=\"text-align:center;\">{y}</th>"))}
+                    <th style="text-align:center;" title="The remaining vacation, which is the sum of all previous columns.">Remaining</th>
+                    <th style="text-align:center;" title="For comparison: remaining vacation, if vacation is earned aliquot day by day (same as in the table above).">Aliquot</th>
+                    <th style="text-align:center;" title="The day when the next entitlement will be added.">Next Entitlement</th>
+                  </tr>
+                </thead>
+                <tbody>
+                """);
+
+        foreach (var u in users)
+        {
+            var day = u.GetLastEmploymentDay(until);
+            var employment = u.Employments.Single(x => day >= x.Begin && day <= x.End);
+            var offsetDays = day.MinutesToDays(u.OffsetVacationsMinutes, u);
+            var remainingDays = day.MinutesToDays(u.OffsetVacationsMinutes + u.RemainingVacationEntitlementMinutes, u);
+            var aliquotDays = day.MinutesToDays(u.RemainingVacationMinutes, u);
+
+            html.W($"""
+                    <tr>
+                      <td style="white-space:nowrap;">{u.Name}</td>
+                      <td style="text-align:right; white-space:nowrap;" title="{employment.MinutesPerDay / 60d:N2} hours per day, {employment.Weekdays.Length} days per week">{employment.MinutesPerDay / 60d:N2}h ({employment.Weekdays.Length}d)</td>
+                      <td style="text-align:right;">{offsetDays:N2}d</td>
+                    """);
+
+            foreach (var year in years)
+            {
+                var entries = u.VacationEntitlementEntries.Where(x => x.Date.Year == year).ToList();
+                var aliquot = entries.Where(x => x.Type == Configuration.User.VacationEntryType.Aliquot).ToList();
+                var entitlements = entries.Where(x => x.Type == Configuration.User.VacationEntryType.Entitlement).ToList();
+                var used = entries.Where(x => x.Type == Configuration.User.VacationEntryType.Used).ToList();
+                var usedDays = day.MinutesToDays(used.Sum(x => x.Minutes), u);
+
+                // show each addition separately (e.g. the rest of the running working year, and the new working year), so it's clear where the entitlement comes from
+                var additions = new List<(DateOnly Date, double Minutes, string Text)>();
+
+                // the entitlement that grows day by day during the first 6 months, and the rest of the first working year that is added after 6 months,
+                // are shown as a single value, because both together are the entitlement of the (rest of the) first working year
+                var sixMonthsEntitlement = aliquot.Count > 0 ? entitlements.FirstOrDefault(x => x.Date == aliquot.Max(a => a.Date).AddDays(1)) : null;
+                if (aliquot.Count > 0)
+                {
+                    var minutes = aliquot.Sum(x => x.Minutes) + (sixMonthsEntitlement?.Minutes ?? 0);
+                    var text = sixMonthsEntitlement != null
+                        ? $"added from {aliquot.Min(x => x.Date):yyyy-MM-dd} until the full entitlement of the first working year on {sixMonthsEntitlement.Date:yyyy-MM-dd}"
+                        : $"added day by day from {aliquot.Min(x => x.Date):yyyy-MM-dd} to {aliquot.Max(x => x.Date):yyyy-MM-dd} (first 6 months, until the full entitlement of the first working year)";
+                    additions.Add((aliquot.Min(x => x.Date), minutes, text));
+                }
+
+                var firstConfiguredDay = u.Employments.Min(x => x.Begin);
+                foreach (var x in entitlements.Where(x => x != sixMonthsEntitlement))
+                {
+                    var isRestOfWorkingYear = x.Date == firstConfiguredDay && u.EmploymentStartForVacationEntitlement < firstConfiguredDay;
+                    additions.Add((x.Date, x.Minutes, $"added on {x.Date:yyyy-MM-dd}"
+                                                      + (isRestOfWorkingYear ? $" (rest of the working year that was running on this day, the part before is included in &quot;Before {firstYear}&quot;)" : "")));
+                }
+
+                var parts = new List<string>();
+                var details = new List<string>();
+                foreach (var a in additions.OrderBy(x => x.Date))
+                {
+                    parts.Add(FormatDays(day.MinutesToDays(a.Minutes, u)));
+                    details.Add($"{FormatDays(day.MinutesToDays(a.Minutes, u))} {a.Text}");
+                }
+
+                if (used.Count > 0)
+                {
+                    var months = used.GroupBy(x => x.Date.Month).OrderBy(x => x.Key).Select(x => $"{new DateOnly(year, x.Key, 1).ToString("MMM", CultureInfo.InvariantCulture)}: {x.Count()}");
+                    parts.Add(FormatDays(usedDays));
+                    details.Add($"{FormatDays(usedDays)} used on {used.Count} days ({string.Join(", ", months)})");
+                }
+
+                var content = string.Join(" ", parts);
+                html.W($"""<td style="text-align:right; white-space:nowrap;" title="{string.Join(newLine, details)}">{content}</td>""");
+            }
+
+            html.W($"""
+                      <td style="text-align:right;"><strong>{remainingDays:N2}d</strong></td>
+                      <td style="text-align:right;" title="{aliquotDays:N2} days + {offsetDays:N2} days = {aliquotDays + offsetDays:N2} days">{aliquotDays + offsetDays:N2}d</td>
+                      <td style="text-align:center;">{(u.NextVacationEntitlementDay.HasValue ? $"{u.NextVacationEntitlementDay:yyyy-MM-dd}" : "-")}</td>
+                    </tr>
+                    """);
+        }
+
+        html.W("""
+               </tbody>
+               </table>
+               """);
+    }
+
+    private static string FormatDays(double days)
+    {
+        return days.ToString("+#,##0.00;-#,##0.00;+0.00", CultureInfo.CurrentCulture) + "d";
     }
 }

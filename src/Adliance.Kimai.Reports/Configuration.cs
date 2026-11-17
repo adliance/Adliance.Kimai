@@ -34,6 +34,7 @@ public class Configuration
         [JsonIgnore] public double RemainingVacationMinutes { get; set; }
         [JsonIgnore] public double RemainingVacationEntitlementMinutes { get; set; }
         [JsonIgnore] public DateOnly? NextVacationEntitlementDay { get; set; }
+        [JsonIgnore] public List<VacationEntry> VacationEntitlementEntries { get; set; } = [];
         [JsonIgnore] public int HomeOfficeDays { get; set; }
         [JsonIgnore] public int PublicHolidayDays { get; set; }
         [JsonIgnore] public int VacationDays { get; set; }
@@ -69,6 +70,23 @@ public class Configuration
         public override string ToString() => Name;
 
         public record Warning(DateOnly Date, string Text);
+
+        /// <summary>
+        /// A change of the vacation entitlement balance on a day: entitlement that arose (positive minutes) or vacation that was used (negative minutes).
+        /// </summary>
+        public record VacationEntry(DateOnly Date, double Minutes, VacationEntryType Type);
+
+        public enum VacationEntryType
+        {
+            /// <summary>Entitlement that grows day by day during the first 6 months of the employment.</summary>
+            Aliquot,
+
+            /// <summary>Entitlement that arises at once (after 6 months, or at the start of a working year).</summary>
+            Entitlement,
+
+            /// <summary>Vacation that was used.</summary>
+            Used
+        }
     }
 
     public class Employment
