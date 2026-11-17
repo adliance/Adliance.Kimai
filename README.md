@@ -64,6 +64,8 @@ The configuration file includes:
 * `username`: The Kimai username (email).
 * `offset_worktime_minutes`: Initial overtime/undertime offset in minutes.
 * `offset_vacation_minutes`: Initial vacation balance offset in minutes.
+* `visible` (optional): Whether the user is shown in the report. Defaults to `true`.
+* `ignore_warnings` (optional): Whether warnings (e.g. about missing breaks) are hidden for this user. Defaults to `false`.
 * `employment_start_for_vacation_entitlement` (optional): The day the employment actually started, if this is before the first configured employment (e.g. because Kimai was introduced later). Used to determine the working years for the vacation entitlement according to the Austrian vacation law. Defaults to the begin of the first employment.
 * `employments`: A list of employment periods, including:
     * `begin`: Start date (YYYY-MM-DD).

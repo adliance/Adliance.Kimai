@@ -98,7 +98,10 @@ public class CalculationService(Configuration config, Data data, DateOnly from, 
                     user.WorkedBillableMinutes += currentDay.GetWorkedBillableMinutes(user, data);
                 }
 
-                CalculateWarnings(user, currentDay);
+                if (!user.IgnoreWarnings)
+                {
+                    CalculateWarnings(user, currentDay);
+                }
 
                 user.RemainingVacationMinutes += earnedVacationMinutesForThisDay;
                 currentDay = currentDay.AddDays(1);

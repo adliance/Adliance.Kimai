@@ -77,6 +77,7 @@ public class OverviewAction : ActionBase
 
         var users = configuration.Users
             .Where(x => x.FoundInKimai)
+            .Where(x => x.Visible)
             .Where(x => x.Employments.Any(e => e.Begin <= until && e.End >= from)) // users that aren't employed in the calculated range can't be calculated
             .OrderBy(x => x.Name)
             .ToList();

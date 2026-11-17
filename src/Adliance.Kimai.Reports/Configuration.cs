@@ -25,6 +25,18 @@ public class Configuration
         [JsonPropertyName("employment_start_for_vacation_entitlement")]
         public DateOnly? EmploymentStartForVacationEntitlement { get; set; }
 
+        /// <summary>
+        /// Whether the user is shown in the reports at all (e.g. to hide users that left a long time ago).
+        /// </summary>
+        [JsonPropertyName("visible")]
+        public bool Visible { get; set; } = true;
+
+        /// <summary>
+        /// Whether warnings (e.g. about missing breaks) are calculated and shown for this user.
+        /// </summary>
+        [JsonPropertyName("ignore_warnings")]
+        public bool IgnoreWarnings { get; set; }
+
         [JsonIgnore] public string Name { get; set; } = string.Empty;
         [JsonIgnore] public double ExpectedMinutesNetto { get; set; }
         [JsonIgnore] public double ExpectedMinutesBrutto { get; set; }
