@@ -50,9 +50,21 @@ public static class DateTimeExtensions
             return day.GetAbsences(user, data).Count > 0;
         }
 
+        /// <summary>
+        /// Paid absences (e.g. sickness) that reduce the expected work time. Time off ("Zeitausgleich") is not part of this,
+        /// because it's unpaid time that should reduce the overtime.
+        /// </summary>
         public double GetOtherAbsenceMinutes(Configuration.User user, Data data)
         {
-            return day.GetAbsences(user, data).Sum(x => (x.Duration ?? 0) / 60d);
+            return day.GetAbsences(user, data).Where(x => !x.IsTimeOff).Sum(x => (x.Duration ?? 0) / 60d);
+        }
+
+        /// <summary>
+        /// Time off ("Zeitausgleich"), which neither reduces the expected work time, nor counts as worked, so it reduces the overtime.
+        /// </summary>
+        public double GetTimeOffMinutes(Configuration.User user, Data data)
+        {
+            return day.GetAbsences(user, data).Where(x => x.IsTimeOff).Sum(x => (x.Duration ?? 0) / 60d);
         }
 
         public bool IsHomeOffice(Configuration.User user, Data data)

@@ -33,10 +33,12 @@ public class Configuration
         [JsonIgnore] public double WorkedBillableMinutes { get; set; }
         [JsonIgnore] public double RemainingVacationMinutes { get; set; }
         [JsonIgnore] public double RemainingVacationEntitlementMinutes { get; set; }
+        [JsonIgnore] public DateOnly? NextVacationEntitlementDay { get; set; }
         [JsonIgnore] public int HomeOfficeDays { get; set; }
         [JsonIgnore] public int PublicHolidayDays { get; set; }
         [JsonIgnore] public int VacationDays { get; set; }
         [JsonIgnore] public double OtherAbsenceMinutes { get; set; }
+        [JsonIgnore] public double TimeOffMinutes { get; set; }
         [JsonIgnore] public bool FoundInKimai { get; set; }
         [JsonIgnore] public List<Warning> Warnings { get; set; } = [];
         [JsonIgnore] public double BillablePercent => 100d / WorkedTotalMinutesNetto * WorkedBillableMinutes;
@@ -151,6 +153,7 @@ public class Configuration
             sb.AppendLine(CultureInfo.InvariantCulture, $"\tPublic Holidays: {u.PublicHolidayDays:N0} days.");
             sb.AppendLine(CultureInfo.InvariantCulture, $"\tVacation: {u.VacationDays:N0} days.");
             sb.AppendLine(CultureInfo.InvariantCulture, $"\tOther Abscences: {u.OtherAbsenceMinutes:N0} minutes.");
+            sb.AppendLine(CultureInfo.InvariantCulture, $"\tTime Off: {u.TimeOffMinutes:N0} minutes.");
         }
 
         return sb.ToString();

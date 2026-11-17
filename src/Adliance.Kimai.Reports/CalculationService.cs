@@ -89,6 +89,7 @@ public class CalculationService(Configuration config, Data data, DateOnly from, 
 
                         user.ExpectedMinutesNetto += expectedMinutesForThisDay - currentDay.GetOtherAbsenceMinutes(user, data);
                         user.OtherAbsenceMinutes += currentDay.GetOtherAbsenceMinutes(user, data);
+                        user.TimeOffMinutes += currentDay.GetTimeOffMinutes(user, data); // only informational, time off doesn't reduce the expected minutes, so it reduces the overtime
                     }
 
                     user.WorkedTotalMinutesNetto += currentDay.GetWorkedTotalMinutes(user, data);
@@ -128,6 +129,26 @@ public class CalculationService(Configuration config, Data data, DateOnly from, 
                 }
             }
         }
+
+        user.NextVacationEntitlementDay = GetNextVacationEntitlementDay(user);
+    }
+
+    /// <summary>
+    /// The next day (after the "until" day) when a new vacation entitlement arises: 6 months after the start in the first working year,
+    /// otherwise at the start of the next working year. <c>null</c> if the employment relationship ends before (or isn't active on the "until" day).
+    /// </summary>
+    private DateOnly? GetNextVacationEntitlementDay(Configuration.User user)
+    {
+        if (!user.Employments.Any(x => until >= x.Begin && until <= x.End))
+        {
+            return null;
+        }
+
+        var (relationshipStart, relationshipEnd) = GetEmploymentRelationship(user, until);
+        var fullYears = GetFullYearsBetween(relationshipStart, until);
+        var sixMonthsAfterStart = relationshipStart.AddMonths(6);
+        var next = fullYears == 0 && until < sixMonthsAfterStart ? sixMonthsAfterStart : relationshipStart.AddYears(fullYears + 1);
+        return next <= relationshipEnd ? next : null;
     }
 
     /// <summary>

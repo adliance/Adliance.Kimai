@@ -56,7 +56,7 @@ public class OverviewAction : ActionBase
                    <th style="text-align:center;" rowspan="2">Productivity</th>
                    <th style="text-align:center;" rowspan="2">Billable</th>
                    <th style="text-align:center;" rowspan="2">Overtime</th>
-                   <th style="text-align:center;" rowspan="2">Absence</th>
+                   <th style="text-align:center;" title="Paid absences (e.g. sickness), that reduce the expected hours." rowspan="2">Absence</th>
                    <th style="text-align:center;" rowspan="2">HomeOffice</th>
                    <th style="text-align:center;" title="Public Holidays" rowspan="2">Holidays</th>
                    <th style="text-align:center; border:0; padding-bottom:0;" colspan="3">Vacation</th>
@@ -102,7 +102,7 @@ public class OverviewAction : ActionBase
                       <td style="text-align:right;" title="{u.BillablePercent:N2}% / {u.ExpectedBillablePercent:N2}%">
                         {html.Tag("mark", u.BillablePercent < u.ExpectedBillablePercent, u.BillablePercent.ToString("N0", CultureInfo.InvariantCulture) + "/" + u.ExpectedBillablePercent.ToString("N0", CultureInfo.InvariantCulture) + "%")}
                       </td>
-                      <td style="text-align:right;" title="{overtime / 60d:N2}h + {u.OffsetWorktimeMinutes / 60d:N2}h = {(overtime + u.OffsetWorktimeMinutes) / 60d:N2}h">
+                      <td style="text-align:right;" title="{overtime / 60d:N2}h + {u.OffsetWorktimeMinutes / 60d:N2}h = {(overtime + u.OffsetWorktimeMinutes) / 60d:N2}h (includes {u.TimeOffMinutes / 60d:N2}h time off)">
                         {(overtime + u.OffsetWorktimeMinutes) / 60d:N2}h
                       </td>
                     <td style="text-align:right;" title="{u.OtherAbsenceMinutes:N0} minutes">{u.OtherAbsenceMinutes / 60d:N2}h</td>
@@ -110,7 +110,7 @@ public class OverviewAction : ActionBase
                       <td style="text-align:right;">{u.PublicHolidayDays:N0}d</td>
                       <td style="text-align:right;">{u.VacationDays:N0}d</td>
                       <td style="text-align:right;" title="{vacationDays:N2} days + {vacationOffsetDays:N2} days = {vacationDays + vacationOffsetDays:N2} days">{vacationDays + vacationOffsetDays:N2}d</td>
-                      <td style="text-align:right;" title="{vacationEntitlementDays:N2} days + {vacationOffsetDays:N2} days = {vacationEntitlementDays + vacationOffsetDays:N2} days">{vacationEntitlementDays + vacationOffsetDays:N2}d</td>
+                      <td style="text-align:right;" title="{vacationEntitlementDays:N2} days + {vacationOffsetDays:N2} days = {vacationEntitlementDays + vacationOffsetDays:N2} days{(u.NextVacationEntitlementDay.HasValue ? $" (next entitlement on {u.NextVacationEntitlementDay:yyyy-MM-dd})" : "")}">{vacationEntitlementDays + vacationOffsetDays:N2}d</td>
                       <td style="text-align:center;">{(u.Warnings.Count > 0 ? $"<a href=\"#warnings_{u.Username}\"><mark>{u.Warnings.Count}</mark></a>" : "")}</td>
                     </tr>
                     """);
