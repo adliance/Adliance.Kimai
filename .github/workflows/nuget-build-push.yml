@@ -19,12 +19,14 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '10.0.x'
+          dotnet-version: '11.0.x'
 
       - name: Install dotnet-setversion
         run: dotnet tool install dotnet-setversion --tool-path ./tools
         
       - name: Apply version 
+        env:
+          DOTNET_ROLL_FORWARD: Major # dotnet-setversion targets .NET 10, let it run on the .NET 11 runtime
         run: |
           cd ./src/Adliance.Kimai.Client
           ./../../tools/setversion 1.0.${{ github.run_number }}

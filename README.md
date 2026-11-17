@@ -6,7 +6,7 @@ Some little tool for Adliance that fetches data from Kimai to build some reports
 
 ## Installation
 
-Ensure you have the .NET 10 SDK installed.
+Ensure you have the .NET 11 SDK installed.
 
 ### From NuGet as global tool
 
