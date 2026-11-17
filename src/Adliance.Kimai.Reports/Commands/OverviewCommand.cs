@@ -59,7 +59,7 @@ public class OverviewAction : ActionBase
                    <th style="text-align:center;" rowspan="2">Absence</th>
                    <th style="text-align:center;" rowspan="2">HomeOffice</th>
                    <th style="text-align:center;" title="Public Holidays" rowspan="2">Holidays</th>
-                   <th style="text-align:center; border:0; padding-bottom:0;" colspan="2">Vacation</th>
+                   <th style="text-align:center; border:0; padding-bottom:0;" colspan="3">Vacation</th>
                    <th style="text-align:center;" title="Warnings" rowspan="2"></td>
                  </tr>
                  <tr>
@@ -68,7 +68,8 @@ public class OverviewAction : ActionBase
                    <th style="text-align:center;">Net</th>
                    <th style="text-align:center;">Total</th>
                    <th style="text-align:center;">Used</th>
-                   <th style="text-align:center;">Remaining</td>
+                   <th style="text-align:center;" title="Remaining vacation, if vacation is earned aliquot day by day.">Aliquot</th>
+                   <th style="text-align:center;" title="Remaining vacation according to the Austrian vacation law: aliquot during the first 6 months, then the allowance for the first working year, and the allowance at the start of each following working year. The allowance of a working year is calculated pro rata from the configured employments, so changed working days and the end of the employment are considered. Always based on all configured employments, ignoring the --from option.">Entitled</th>
                  </tr>
                </thead>
                <tbody>
@@ -86,6 +87,7 @@ public class OverviewAction : ActionBase
             var overtime = u.WorkedTotalMinutesNetto - u.ExpectedMinutesNetto;
             var vacationDays = day.MinutesToDays(u.RemainingVacationMinutes, u);
             var vacationOffsetDays = day.MinutesToDays(u.OffsetVacationsMinutes, u);
+            var vacationEntitlementDays = day.MinutesToDays(u.RemainingVacationEntitlementMinutes, u);
 
             html.W($"""
                     <tr>
@@ -108,6 +110,7 @@ public class OverviewAction : ActionBase
                       <td style="text-align:right;">{u.PublicHolidayDays:N0}d</td>
                       <td style="text-align:right;">{u.VacationDays:N0}d</td>
                       <td style="text-align:right;" title="{vacationDays:N2} days + {vacationOffsetDays:N2} days = {vacationDays + vacationOffsetDays:N2} days">{vacationDays + vacationOffsetDays:N2}d</td>
+                      <td style="text-align:right;" title="{vacationEntitlementDays:N2} days + {vacationOffsetDays:N2} days = {vacationEntitlementDays + vacationOffsetDays:N2} days">{vacationEntitlementDays + vacationOffsetDays:N2}d</td>
                       <td style="text-align:center;">{(u.Warnings.Count > 0 ? $"<a href=\"#warnings_{u.Username}\"><mark>{u.Warnings.Count}</mark></a>" : "")}</td>
                     </tr>
                     """);

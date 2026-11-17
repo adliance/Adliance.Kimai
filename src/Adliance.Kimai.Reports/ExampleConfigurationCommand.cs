@@ -33,6 +33,7 @@ public class ExampleConfigurationAction : AsynchronousCommandLineAction
                     Username = "hannes.sachsenhofer@adliance.net",
                     OffsetVacationsMinutes = 0,
                     OffsetWorktimeMinutes = 0,
+                    EmploymentStartForVacationEntitlement = new DateOnly(2023, 9, 1),
                     Employments =
                     [
                         new Configuration.Employment

@@ -18,6 +18,13 @@ public class Configuration
         [JsonPropertyName("offset_vacation_minutes")] public double OffsetVacationsMinutes { get; set; }
         [JsonPropertyName("employments")] public List<Employment> Employments { get; set; } = [];
 
+        /// <summary>
+        /// The day the employment actually started, if this is before the first configured employment (e.g. because we started using Kimai later).
+        /// Only used to calculate the working years for the vacation entitlement. Defaults to the begin of the first configured employment.
+        /// </summary>
+        [JsonPropertyName("employment_start_for_vacation_entitlement")]
+        public DateOnly? EmploymentStartForVacationEntitlement { get; set; }
+
         [JsonIgnore] public string Name { get; set; } = string.Empty;
         [JsonIgnore] public double ExpectedMinutesNetto { get; set; }
         [JsonIgnore] public double ExpectedMinutesBrutto { get; set; }
@@ -25,6 +32,7 @@ public class Configuration
         [JsonIgnore] public double WorkedTotalMinutesBrutto { get; set; }
         [JsonIgnore] public double WorkedBillableMinutes { get; set; }
         [JsonIgnore] public double RemainingVacationMinutes { get; set; }
+        [JsonIgnore] public double RemainingVacationEntitlementMinutes { get; set; }
         [JsonIgnore] public int HomeOfficeDays { get; set; }
         [JsonIgnore] public int PublicHolidayDays { get; set; }
         [JsonIgnore] public int VacationDays { get; set; }
@@ -131,12 +139,14 @@ public class Configuration
             var overtime = u.WorkedTotalMinutesNetto - u.ExpectedMinutesNetto;
             var vacationDays = day.MinutesToDays(u.RemainingVacationMinutes, u);
             var vacationOffsetDays = day.MinutesToDays(u.OffsetVacationsMinutes, u);
+            var vacationEntitlementDays = day.MinutesToDays(u.RemainingVacationEntitlementMinutes, u);
 
             sb.AppendLine(CultureInfo.InvariantCulture, $"{u.Name}:");
             sb.AppendLine(CultureInfo.InvariantCulture, $"\tExpected: {u.ExpectedMinutesNetto / 60d:N2}h.");
             sb.AppendLine(CultureInfo.InvariantCulture, $"\tWorked: {u.WorkedTotalMinutesNetto / 60d:N2}h.");
             sb.AppendLine(CultureInfo.InvariantCulture, $"\tOvertime: {overtime / 60d:N2}h + {u.OffsetWorktimeMinutes / 60d:N2}h = {(overtime + u.OffsetWorktimeMinutes) / 60d:N2}h.");
-            sb.AppendLine(CultureInfo.InvariantCulture, $"\tVacation: {vacationDays:N2} days + {vacationOffsetDays:N2} days = {vacationDays + vacationOffsetDays:N2} days.");
+            sb.AppendLine(CultureInfo.InvariantCulture, $"\tVacation (aliquot): {vacationDays:N2} days + {vacationOffsetDays:N2} days = {vacationDays + vacationOffsetDays:N2} days.");
+            sb.AppendLine(CultureInfo.InvariantCulture, $"\tVacation (entitlement): {vacationEntitlementDays:N2} days + {vacationOffsetDays:N2} days = {vacationEntitlementDays + vacationOffsetDays:N2} days.");
             sb.AppendLine(CultureInfo.InvariantCulture, $"\tHome Office: {u.HomeOfficeDays:N0} days.");
             sb.AppendLine(CultureInfo.InvariantCulture, $"\tPublic Holidays: {u.PublicHolidayDays:N0} days.");
             sb.AppendLine(CultureInfo.InvariantCulture, $"\tVacation: {u.VacationDays:N0} days.");

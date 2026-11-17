@@ -38,23 +38,18 @@ public class CalculationService(Configuration config, Data data, DateOnly from, 
                 continue; // employments that ended before the "from" day are not part of the calculation
             }
 
-            if (e.End > until)
+            // only calculate within the "from" and "until" days (the very beginning and today by default)
+            // we don't modify the employment itself, because the vacation entitlement is calculated based on the configured employments
+            var begin = e.Begin < from ? from : e.Begin;
+            var end = e.End > until ? until : e.End;
+
+            if (end < begin)
             {
-                e.End = until; // only calculate up to the "until" day (today by default), default value is DateOnly.Max
+                throw new Exception($"End date {end} is before start date {begin} (user {user.Username}).");
             }
 
-            if (e.Begin < from)
-            {
-                e.Begin = from; // only calculate starting with the "from" day (the very beginning by default)
-            }
-
-            if (e.End < e.Begin)
-            {
-                throw new Exception($"End date {e.End} is before start date {e.Begin} (user {user.Username}).");
-            }
-
-            var currentDay = e.Begin;
-            while (currentDay <= e.End)
+            var currentDay = begin;
+            while (currentDay <= end)
             {
                 var expectedMinutesForThisDay = e.GetExpectedMinutes(currentDay);
                 if (expectedMinutesForThisDay > 0)
@@ -62,7 +57,7 @@ public class CalculationService(Configuration config, Data data, DateOnly from, 
                     user.ExpectedMinutesBrutto += expectedMinutesForThisDay;
                 }
 
-                var earnedVacationMinutesForThisDay = e.MinutesPerDay * (25.0 / 5.0 * e.Weekdays.Length) / (DateTime.IsLeapYear(currentDay.Year) ? 366.0 : 365.0);
+                var earnedVacationMinutesForThisDay = GetAliquotVacationMinutes(e, currentDay);
                 var expectedBillableOnThisDay = e.GetExpectedBillablePercent(currentDay);
                 if (expectedBillableOnThisDay.HasValue)
                 {
@@ -110,6 +105,188 @@ public class CalculationService(Configuration config, Data data, DateOnly from, 
         }
 
         user.ExpectedBillablePercent = expectedBillable.Count > 0 ? expectedBillable.Average() : 0;
+        CalculateVacationEntitlement(user);
+    }
+
+    /// <summary>
+    /// Calculates the remaining vacation entitlement according to the Austrian Urlaubsgesetz.
+    /// This deliberately ignores the "from" day, because the entitlement depends on the employments as configured (when the
+    /// working year started, which employments are part of it), so it always covers the configured employments up to the "until" day.
+    /// </summary>
+    private void CalculateVacationEntitlement(Configuration.User user)
+    {
+        foreach (var e in user.Employments)
+        {
+            var end = e.End > until ? until : e.End;
+            for (var day = e.Begin; day <= end; day = day.AddDays(1))
+            {
+                user.RemainingVacationEntitlementMinutes += GetEntitledVacationMinutes(user, day);
+
+                if (!day.IsPublicHoliday(data) && day.IsVacationDay(user, data))
+                {
+                    user.RemainingVacationEntitlementMinutes -= e.GetExpectedMinutes(day);
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// The yearly vacation allowance of an employment, which is 5 weeks (= 25 days for a 5-day week, 20 days for a 4-day week, ...).
+    /// </summary>
+    private static double GetYearlyVacationMinutes(Configuration.Employment employment)
+    {
+        return employment.MinutesPerDay * 5.0 * employment.Weekdays.Length;
+    }
+
+    /// <summary>
+    /// The vacation that is earned on a single day, if the yearly vacation allowance is distributed evenly over the year.
+    /// </summary>
+    private static double GetAliquotVacationMinutes(Configuration.Employment employment, DateOnly day)
+    {
+        return GetYearlyVacationMinutes(employment) / (DateTime.IsLeapYear(day.Year) ? 366.0 : 365.0);
+    }
+
+    /// <summary>
+    /// The vacation entitlement ("Urlaubsanspruch") that arises on a single day according to the Austrian Urlaubsgesetz (§ 2 UrlG):
+    /// During the first 6 months of the first working year, the entitlement grows aliquot.
+    /// After 6 months, the entitlement for the whole first working year arises.
+    /// With the beginning of each following working year, the entitlement for the whole working year arises.
+    /// The working year starts with the day the employment relationship started (not the calendar year), which can be configured
+    /// for the first employment relationship, if it started before the first configured employment.
+    /// The vacation offset is expected to contain the aliquot vacation balance up to the first configured employment, so if the entitlement
+    /// for the running working year arose before, the rest of it (that is not yet part of the aliquot offset) arises on the first configured day.
+    /// The entitlement for a working year is calculated pro rata from all employments within this working year, so
+    /// changes of the working days (e.g. from 5 to 4 days a week) as well as the end of the employment relationship
+    /// within the working year (which caps the entitlement to the aliquot part, § 10 UrlG) are considered.
+    /// </summary>
+    private static double GetEntitledVacationMinutes(Configuration.User user, DateOnly day)
+    {
+        var (relationshipStart, relationshipEnd) = GetEmploymentRelationship(user, day);
+        var fullYears = GetFullYearsBetween(relationshipStart, day);
+        var workingYearStart = relationshipStart.AddYears(fullYears);
+        var nextWorkingYearStart = relationshipStart.AddYears(fullYears + 1);
+        var daysInWorkingYear = nextWorkingYearStart.DayNumber - workingYearStart.DayNumber;
+        var workingYearEnd = nextWorkingYearStart.AddDays(-1) < relationshipEnd ? nextWorkingYearStart.AddDays(-1) : relationshipEnd;
+
+        var sixMonthsAfterStart = relationshipStart.AddMonths(6);
+
+        // if the employment started before the first configured employment, the vacation offset contains the aliquot vacation up to the first configured day,
+        // but the entitlement for the running working year already arose before, so we need to add the part of the running working year that is not yet part of the offset
+        var firstConfiguredDay = user.Employments.Min(x => x.Begin);
+        if (day == firstConfiguredDay && relationshipStart < firstConfiguredDay)
+        {
+            var entitlementDay = fullYears == 0 ? sixMonthsAfterStart : workingYearStart;
+            if (entitlementDay < day)
+            {
+                return GetAliquotVacationMinutes(user, day, workingYearEnd, daysInWorkingYear);
+            }
+        }
+
+        if (fullYears == 0)
+        {
+            if (day < sixMonthsAfterStart)
+            {
+                return GetAliquotVacationMinutes(user, day, day, daysInWorkingYear);
+            }
+
+            if (day == sixMonthsAfterStart)
+            {
+                // the entitlement for the whole working year, minus what was already granted aliquot in the first 6 months
+                return GetAliquotVacationMinutes(user, workingYearStart, workingYearEnd, daysInWorkingYear)
+                       - GetAliquotVacationMinutes(user, workingYearStart, sixMonthsAfterStart.AddDays(-1), daysInWorkingYear);
+            }
+
+            return 0;
+        }
+
+        if (day == workingYearStart)
+        {
+            return GetAliquotVacationMinutes(user, workingYearStart, workingYearEnd, daysInWorkingYear);
+        }
+
+        return 0;
+    }
+
+    /// <summary>
+    /// The aliquot part of the yearly vacation allowance for all days between (and including) "from" and "to", based on the employment on each day.
+    /// </summary>
+    private static double GetAliquotVacationMinutes(Configuration.User user, DateOnly from, DateOnly to, int daysInWorkingYear)
+    {
+        var result = 0.0;
+        for (var day = from; day <= to; day = day.AddDays(1))
+        {
+            var employment = GetEmploymentForVacationEntitlement(user, day);
+            if (employment != null)
+            {
+                result += GetYearlyVacationMinutes(employment) / daysInWorkingYear;
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// The employment on this day. For days between the real employment start (if configured) and the first configured employment,
+    /// we assume the conditions of the first configured employment, because we don't know the employments before.
+    /// </summary>
+    private static Configuration.Employment? GetEmploymentForVacationEntitlement(Configuration.User user, DateOnly day)
+    {
+        var employment = user.Employments.FirstOrDefault(x => day >= x.Begin && day <= x.End);
+        if (employment == null && user.EmploymentStartForVacationEntitlement <= day)
+        {
+            var firstEmployment = user.Employments.MinBy(x => x.Begin);
+            if (firstEmployment != null && day < firstEmployment.Begin)
+            {
+                return firstEmployment;
+            }
+        }
+
+        return employment;
+    }
+
+    /// <summary>
+    /// Employments that directly follow each other (e.g. a change from 5 to 4 days a week) are one single employment relationship,
+    /// so the working year starts with the first of these employments, and the relationship ends with the last of these employments.
+    /// </summary>
+    private static (DateOnly Start, DateOnly End) GetEmploymentRelationship(Configuration.User user, DateOnly day)
+    {
+        var employment = user.Employments.First(x => day >= x.Begin && day <= x.End);
+
+        var start = employment.Begin;
+        while (user.Employments.FirstOrDefault(x => x.Begin < start && x.End >= start.AddDays(-1)) is { } previous)
+        {
+            start = previous.Begin;
+        }
+
+        // the first employment relationship might have started before the first configured employment (e.g. before we started using Kimai)
+        if (user.EmploymentStartForVacationEntitlement.HasValue && start == user.Employments.Min(x => x.Begin))
+        {
+            if (user.EmploymentStartForVacationEntitlement.Value > start)
+            {
+                throw new Exception($"The employment start for vacation entitlement {user.EmploymentStartForVacationEntitlement.Value} is after the first employment {start} (user {user.Username}).");
+            }
+
+            start = user.EmploymentStartForVacationEntitlement.Value;
+        }
+
+        var end = employment.End;
+        while (end < DateOnly.MaxValue && user.Employments.FirstOrDefault(x => x.End > end && x.Begin <= end.AddDays(1)) is { } next)
+        {
+            end = next.End;
+        }
+
+        return (start, end);
+    }
+
+    private static int GetFullYearsBetween(DateOnly start, DateOnly day)
+    {
+        var years = day.Year - start.Year;
+        if (start.AddYears(years) > day)
+        {
+            years--;
+        }
+
+        return years;
     }
 
     private void CalculateWarnings(Configuration.User user, DateOnly day)
